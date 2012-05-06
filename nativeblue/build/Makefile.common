@@ -1,0 +1,13 @@
+
+CC       := $(TC_PATH)/bin/i686-nacl-gcc
+LINK     := $(TC_PATH)/bin/i686-nacl-ar
+STRIP    := $(TC_PATH)/bin/i686-nacl-strip
+
+$(PROJECT) : $(OBJS)
+	$(LINK) rcs $@ $^
+
+.PHONY: clean
+clean:
+	rm -f $(OBJS)
+	rm -f *.a
+

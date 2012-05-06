@@ -1,0 +1,13 @@
+NATIVE BLUE
+-----------
+
+libnativeblue is a C library designed as a simple wrapper for headless NaCl applications
+
+- Redirect stdin and stdout from browser
+- Provide familiar main() function
+
+DEPENDENCIES
+------------
+
+- nacl_sdk/pepper_19
+- libnativeblack

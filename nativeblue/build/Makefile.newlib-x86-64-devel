@@ -1,0 +1,11 @@
+PROJECT  := libnativeblack-newlib-x86-64-devel.a
+OBJS     := $(patsubst %.c, %.newlib-x86-64-devel.o, $(SOURCES))
+TC_PATH  := $(abspath $(NACL_SDK_ROOT)/toolchain/$(OSNAME)_x86_newlib)
+CFLAGS   += -m64 -DDEVEL -O2
+
+include build/Makefile.common
+
+%.newlib-x86-64-devel.o : %.c $(DEPS)
+	$(CC) $(CFLAGS) -c $< -o $@
+	$(STRIP) $@
+

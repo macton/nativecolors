@@ -1,0 +1,14 @@
+NATIVE BLACK
+------------
+
+Native Black is a C API partially generated from the NaCl C PPAPI. The goals of the API are:
+
+- Provide only a thin wrapper on the C API (no or minimal runtime cost)
+- Simplify the API without changing it singificantly. 
+  - e.g. Assume only a single instance per module.
+  - The names and purpose of the API functions should be coresspond directly to the C PPAPI
+- Add basic utility functions
+  - All additional functions or structures outside of the C PPAPI should be marked "#nablack-utility"
+  - The TWEAK macros give access to specific variables from the browser for development.
+- Add basic conventions
+

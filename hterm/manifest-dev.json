@@ -1,0 +1,30 @@
+{
+  "key": "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDixnK8f4AuZrV+QZx7iiONG/SAiU5VrjlXD2KxRGvI6tDJrLvUin+GpcuMH1d/Qrc0+PmCzJ1duAiD/9F2q8kiYwQ1C3gZmztYneAiVX+3/OvXHr/idyueNQ5XFvBnMCpKD0KqPEksP80utV417fuaHAY4NFjofLZyWUvu23XHRwIDAQAB",
+  "update_url": "http://www.corp.google.com/~rginda/hterm/updates.xml",
+  "minimum_chrome_version": "18",
+  "manifest_version": 2,
+  "content_security_policy": "script-src 'self'; object-src 'self'",
+  "name": "Secure Shell (dev)",
+  "version": "0.7.9.3",
+  "default_locale": "en",
+  "icons": {
+    "128": "images/vt-128.png",
+    "48": "images/vt-48.png",
+    "32": "images/vt-32.png",
+    "16": "images/vt-16.png"
+  },
+  "description": "Terminal emulator and SSH client.",
+  "offline_enabled": true,
+  "permissions": [
+    "unlimitedStorage",
+    "terminalPrivate"
+  ],
+  "web_accessible_resources": [
+    "html/google_relay.html"
+  ],
+  "app": {
+    "launch": {
+      "local_path": "html/nassh.html"
+    }
+  }
+}
