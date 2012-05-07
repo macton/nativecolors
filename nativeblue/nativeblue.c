@@ -9,11 +9,12 @@
 #include <alloca.h>
 #include <ctype.h>
 
-// fileno() is missing from <stdio.h>
-int fileno( FILE* stream );
+int    nablue_main(int argc, char **argv);
+void*  main_entry(void *parm);
+int    __wrap_write(int, void *, size_t);
 
-// warning: pthread_kill is not implemented and will always fail
-// warning: pthread_cancel is not implemented and will always fail
+
+void BrowserSysCallWrite( const char* dev, const char* buffer, size_t size );
 
 enum
 {
@@ -36,35 +37,182 @@ typedef struct MainThreadStatus MainThreadStatus ;
 pthread_t         g_MainThread;
 MainThreadStatus  g_MainThreadStatus;
 
-int    nablue_main(int argc, char **argv);
-void*  main_entry(void *parm);
-
-int    __real_write(int, void *, size_t);
-int    __wrap_write(int, void *, size_t);
 
 // --------------------------------------------------------------------------
-// #HACK Locked posts from whatever thread.
-// #HACK Nothing about this is good. 
-// ...just for a test at the moment. But I'm cringing just looking at it.
-//   #todo Use a real buffer. Argh! allocations everywhere! :(
-//   #todo All this locking isn't needed. Fix that.
+// Shared command buffer for commands that need to run on the NaCl thread
+//   #todo reduce locking
 // --------------------------------------------------------------------------
 
-typedef struct WriteCommand WriteCommand;
-struct WriteCommand
+typedef struct NaBlueCommand      NaBlueCommand;
+typedef struct NaBlueWriteCommand NaBlueWriteCommand;
+
+enum
 {
-  int           fd;
-  size_t        count;
-  WriteCommand* next;
-  char          buf[0];
+  kNaBlueCommandWrite = 1,
 };
 
+struct NaBlueCommand
+{
+  int32_t m_Command;
+  size_t  m_Size;
+};
 
-pthread_mutex_t   g_WriteMutex        = PTHREAD_MUTEX_INITIALIZER;
-WriteCommand*     g_WriteCommandFirst = NULL;
-WriteCommand*     g_WriteCommandLast  = NULL;
+struct NaBlueWriteCommand
+{
+  int32_t m_Fd;
+  size_t  m_Count;
+};
 
-void FlushWrite();
+void FlushWrite(void);
+
+// --------------------------------------------------------------------------
+// Scratch allocation used by browser command buffer
+//   - These functions can be overriden by application if desired
+//   - Buffer will be divided in half and double buffered
+//   - If NaBlueRealloc fails (fixed memory conditions), the command will not
+//     be processed.
+// --------------------------------------------------------------------------
+
+size_t NaBlueDefaultScratchSize( void )
+{
+  return 64 * 1024;
+}
+
+char* NaBlueAlloc( size_t size )
+{
+  return (char*)malloc( size );
+}
+
+void NaBlueFree( char* buf )
+{
+  free( buf );
+}
+
+char* NaBlueRealloc( char* old_buf, size_t new_size )
+{
+  return (char*)realloc( old_buf, new_size );  
+}
+
+// This function is provided for the application to override in very space-sentitive
+// situations where rounding up by large amounts wouldn't be acceptable.
+size_t NaBlueReallocSizeRoundUp( size_t size )
+{
+  return next_pow2_u64( (uint64_t) size );
+}
+
+// --------------------------------------------------------------------------
+// Command buffer scratch
+// --------------------------------------------------------------------------
+
+static char*             s_NaBlueCommandScratch[2]       = { NULL, NULL };
+static size_t            s_NaBlueCommandScratchOffset[2] = { 0,    0    };
+static size_t            s_NaBlueCommandScratchSize[2]   = { 0,    0    };
+static int               s_NaBlueCommandIndex            = 0;
+static pthread_mutex_t   s_NaBlueCommandLock             = PTHREAD_MUTEX_INITIALIZER;
+
+static int s_DebugWriteCount = 0;
+
+int NaBlueCommandStartup( void )
+{
+  size_t scratch_size = NaBlueDefaultScratchSize();
+
+  s_NaBlueCommandScratch[0]     = NaBlueAlloc( scratch_size );
+  s_NaBlueCommandScratchSize[0] = scratch_size;
+
+  if ( s_NaBlueCommandScratch[0] == NULL )
+  {
+    return (0);
+  }
+
+  s_NaBlueCommandScratch[1]     = NaBlueAlloc( scratch_size );
+  s_NaBlueCommandScratchSize[1] = scratch_size;
+
+  if ( s_NaBlueCommandScratch[1] == NULL )
+  {
+    NaBlueFree( s_NaBlueCommandScratch[0] );
+    return (0);
+  }
+
+  s_NaBlueCommandIndex = 0;
+
+  return (1);
+}
+
+void NaBlueCommandShutdown( void )
+{
+  NaBlueFree( s_NaBlueCommandScratch[0] );
+  NaBlueFree( s_NaBlueCommandScratch[1] );
+
+  s_NaBlueCommandScratchSize[0]   = 0;
+  s_NaBlueCommandScratchSize[1]   = 0;
+  s_NaBlueCommandScratchOffset[0] = 0;
+  s_NaBlueCommandScratchOffset[1] = 0;
+}
+
+NaBlueCommand* NaBlueCommandAllocate( int cmd, size_t size )
+{
+  size_t alloc_size = sizeof( NaBlueCommand ) + size;
+
+  int    scratch_index     = s_NaBlueCommandIndex;
+  size_t scratch_size      = s_NaBlueCommandScratchSize[ scratch_index ];
+  size_t scratch_used      = s_NaBlueCommandScratchOffset[ scratch_index ];
+  size_t scratch_available = scratch_size - scratch_used;
+
+  if ( alloc_size > scratch_available )
+  {
+    // One of two things will happen in this case:
+    //   (1) Realloc the buffer (raise high-water mark) and continue
+    //   (2) Realloc fails (fixed memory condition); command silently dropped. Assume application is signalled by having overridden NaBlueRealloc.
+
+    size_t scratch_needed    = scratch_used + alloc_size;
+    size_t scratch_requested = NaBlueReallocSizeRoundUp( scratch_needed );
+    char*  scratch_current   = s_NaBlueCommandScratch[ scratch_index ];
+    char*  scratch_new       = NaBlueRealloc( scratch_current, scratch_requested );
+
+    if ( !scratch_new )
+    {
+      return NULL; 
+    }
+
+    s_NaBlueCommandScratch[ scratch_index ]     = scratch_new;
+    s_NaBlueCommandScratchSize[ scratch_index ] = scratch_requested;
+
+    scratch_size      = scratch_requested;
+    scratch_available = scratch_size - scratch_used;
+  }
+
+  char*           scratch = s_NaBlueCommandScratch[ scratch_index ] + scratch_used;
+  NaBlueCommand*  command = (NaBlueCommand*)scratch;
+  
+  command->m_Command = cmd;
+  command->m_Size    = size;
+  
+  s_NaBlueCommandScratchOffset[ scratch_index ] += alloc_size;
+
+  return ( command );
+}
+
+void NaBlueCommandSwapBuffers( void )
+{
+  pthread_mutex_lock(&s_NaBlueCommandLock);
+
+  s_NaBlueCommandIndex ^= 1;
+  s_NaBlueCommandScratchOffset[ s_NaBlueCommandIndex ] = 0;
+
+  pthread_mutex_unlock(&s_NaBlueCommandLock);
+}
+
+NaBlueCommand* NaBlueCommandGetNext( size_t offset )
+{
+  int back_index = s_NaBlueCommandIndex ^ 1;
+  int back_used  = s_NaBlueCommandScratchOffset[ back_index ];
+
+  if ( offset < back_used )
+  {
+    return (NaBlueCommand*)( s_NaBlueCommandScratch[ back_index ] + offset );
+  }
+  return NULL;
+}
 
 // --------------------------------------------------------------------------
 // Required entry point functions -------------------------------------------
@@ -77,12 +225,10 @@ PP_Bool NaBlackHandleInputEvent( PP_Resource input_event )
 
 PP_Bool NaBlackInstanceCreate( uint32_t argc, const char* argn[], const char* argv[] )
 {
-  int main_start_result;
-
-  // printf("Instance_DidCreate\n");
+  NaBlueCommandStartup();
 
   g_MainThreadStatus.m_Status = kMainStatusStarting;
-  main_start_result           = pthread_create(&g_MainThread, NULL, main_entry, NULL);
+  int main_start_result       = pthread_create(&g_MainThread, NULL, main_entry, NULL);
   if ( main_start_result != 0 )
   {
     g_MainThreadStatus.m_Status = kMainStatusError;
@@ -101,6 +247,8 @@ void NaBlackInstanceDestroy()
   {
     (void)pthread_join( g_MainThread, NULL );
   }
+
+  NaBlueCommandShutdown();
 }
 
 void NaBlackDidChangeView( PP_Resource view )
@@ -139,7 +287,121 @@ void NaBlackRenderFrame()
 }
 
 // --------------------------------------------------------------------------
-// Utility functions --------------------------------------------------------
+// Thread entry point to call application main(2)
+// --------------------------------------------------------------------------
+
+void* main_entry(void* parm)
+{
+  (void)parm;
+
+  g_MainThreadStatus.m_Status = kMainStatusRunning;
+  g_MainThreadStatus.m_Result = nablue_main( 0, NULL );
+  g_MainThreadStatus.m_Status = kMainStatusComplete;
+
+  return NULL;
+}
+
+// --------------------------------------------------------------------------
+// Wrapped POSIX calls. 
+// - Called from application threads
+// - Queue commands to be processed from the main thread, when possible.
+// - Priority is given to functionality that provides easier porting 
+// - Someone needs to design a new OS standard that doesn't have all these
+//   goddamn return values which makes it impossible to design a real 
+//   concurrent model.
+// --------------------------------------------------------------------------
+
+int __wrap_write(int fd, void* buf, size_t count)
+{
+  pthread_mutex_lock(&s_NaBlueCommandLock);
+
+  size_t         packet_size = sizeof( NaBlueWriteCommand ) + count;
+  NaBlueCommand* command     = NaBlueCommandAllocate( kNaBlueCommandWrite, packet_size );
+
+  if ( !command )
+  {
+    pthread_mutex_unlock(&s_NaBlueCommandLock);
+    return (0);
+  }
+
+  NaBlueWriteCommand* write_command = (NaBlueWriteCommand*) ( ( (char*)command ) + sizeof( NaBlueCommand ) );
+  char*               write_buffer  = ( (char*) write_command ) + sizeof( NaBlueWriteCommand );
+
+  write_command->m_Fd    = fd;
+  write_command->m_Count = count;
+
+  memcpy( write_buffer, buf, count );
+
+  s_DebugWriteCount++;
+  pthread_mutex_unlock(&s_NaBlueCommandLock);
+
+  return ( count );
+}
+
+void FlushWrite(void)
+{
+  size_t         command_offset = 0;
+  NaBlueCommand* command;
+  int            command_count = 0;
+
+  while ( (command = NaBlueCommandGetNext( command_offset )) )
+  {
+    command_offset += sizeof( NaBlueCommand ) + command->m_Size;
+    command_count++;
+
+    switch ( command->m_Command )
+    {
+      case kNaBlueCommandWrite:
+      {
+        NaBlueWriteCommand* write_command = (NaBlueWriteCommand*) ( ( (char*)command ) + sizeof( NaBlueCommand ) );
+        char*               write_buffer  = ( (char*) write_command ) + sizeof( NaBlueWriteCommand );
+
+        if ( write_command->m_Fd == fileno(stdout) )
+        {
+          BrowserSysCallWrite( "/dev/stdout", write_buffer, write_command->m_Count );
+        } 
+        else if ( write_command->m_Fd == fileno(stderr) )
+        {
+          BrowserSysCallWrite( "/dev/stderr", write_buffer, write_command->m_Count );
+        }
+        else /* fd should have come from the browser via wrapped open(), so it's aware of it */
+        {
+          int  dev_len = sprintf( NULL, "/dev/fd/%d", write_command->m_Fd );
+          char dev[ dev_len+1 ]; 
+    
+          sprintf( dev, "/dev/fd/%d", write_command->m_Fd );
+          
+          BrowserSysCallWrite( dev, write_buffer, write_command->m_Count );
+        }
+      }
+      break;
+    }
+  }
+
+  NaBlueCommandSwapBuffers();
+}
+
+// --------------------------------------------------------------------------
+// Selected syscalls re-routed to the browser
+//   - Yes, it definitely could be thought of as a crazy-backward OS kernel.
+//   - These calls can only be called from the NaCl thread.
+//   - Internal use only!
+// --------------------------------------------------------------------------
+
+void BrowserSysCallWrite( const char* dev, const char* buffer, size_t size )
+{
+  int  encoded_len = strnurlencode( NULL, buffer, size );
+  char message[ encoded_len+1 ];
+
+  strnurlencode( message, buffer, encoded_len+1 );
+  message[ encoded_len ] = 0;
+
+  NaBlackMessagingPostPrintf( "{ \"func\": \"write\", \"dev\": \"%s\", \"data\": \"%s\", \"len\": %d }", dev, message, encoded_len );
+}
+
+// --------------------------------------------------------------------------
+// Utility functions 
+//   - Additional functions used both internally and provided to application
 // --------------------------------------------------------------------------
 
 /* Converts a hex character to its integer value */
@@ -221,90 +483,27 @@ int strnurldecode( char* dest, const char* str, size_t max_len )
   return len;
 }
 
-// --------------------------------------------------------------------------
-// Required entry point functions -------------------------------------------
-// --------------------------------------------------------------------------
-
-int __wrap_write(int fd, void* buf, size_t count)
+uint32_t next_pow2_u32(uint32_t x)
 {
-  int           buffer_size = sizeof( WriteCommand ) + count;
-  WriteCommand* buffer      = (WriteCommand*)malloc( buffer_size );
-
-
-  buffer->fd    = fd;
-  buffer->count = count;
-  buffer->next  = NULL;
-  memcpy( buffer->buf, buf, count );
-
-  pthread_mutex_lock(&g_WriteMutex);
-
-  if ( g_WriteCommandLast )
-  {
-    g_WriteCommandLast->next = buffer;
-    g_WriteCommandLast       = buffer;
-  }
-  else
-  {
-    g_WriteCommandFirst      = buffer;
-    g_WriteCommandLast       = buffer;
-  }
-
-  pthread_mutex_unlock(&g_WriteMutex);
-
-  return ( count );
-}
-
-void FlushWrite()
-{
-  pthread_mutex_lock(&g_WriteMutex);
-
-  WriteCommand* command = g_WriteCommandFirst;
-  WriteCommand* next;
+  x -= 1;
+  x |= (x >> 1);
+  x |= (x >> 2);
+  x |= (x >> 4);
+  x |= (x >> 8);
+  x |= (x >> 16);
   
-  while ( command )
-  {
-    next = command->next;
-
-    int   fd    = command->fd;
-    int   count = command->count;
-    char* buf   = command->buf;
-
-    int  encoded_len = strnurlencode( NULL, buf, count );
-    char message[ encoded_len+1 ];
-
-    strnurlencode( message, buf, encoded_len+1 );
-    message[ encoded_len ] = 0;
-
-    if ( fd == fileno(stdout) )
-    {
-      NaBlackMessagingPostPrintf( "{ \"func\": \"write\", \"dev\": \"/dev/stdout\", \"data\": \"%s\", \"len\": %d }", message, encoded_len );
-    } 
-    else if ( fd == fileno(stderr) )
-    {
-      NaBlackMessagingPostPrintf( "{ \"func\": \"write\", \"dev\": \"/dev/stderr\", \"data\": \"%s\", \"len\": %d }", message, encoded_len );
-    }
-    else /* fd should have come from the browser, so it's aware of it */
-    {
-      NaBlackMessagingPostPrintf( "{ \"func\": \"write\", \"dev\": \"/dev/fd/%d\", \"data\": \"%s\", \"len\": %d }", fd, message, encoded_len );
-    }
-
-    free(command);
-    command = next;
-  }
-
-  g_WriteCommandFirst = NULL;
-  g_WriteCommandLast  = NULL;
-
-  pthread_mutex_unlock(&g_WriteMutex);
+  return x + 1;
 }
 
-void* main_entry(void* parm)
+uint64_t next_pow2_u64(uint64_t x)
 {
-  (void)parm;
-
-  g_MainThreadStatus.m_Status = kMainStatusRunning;
-  g_MainThreadStatus.m_Result = nablue_main( 0, NULL );
-  g_MainThreadStatus.m_Status = kMainStatusComplete;
-
-  return NULL;
+  x -= 1;
+  x |= (x >> 1);
+  x |= (x >> 2);
+  x |= (x >> 4);
+  x |= (x >> 8);
+  x |= (x >> 16);
+  x |= (x >> 32);
+  
+  return x + 1;
 }
