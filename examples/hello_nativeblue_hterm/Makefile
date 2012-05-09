@@ -40,4 +40,6 @@ glibc-devel-debug:
 clean:
 	rm -f *.o
 	rm -f *.nexe
+	rm -f ../../nativeblack/*.o
+	rm -f ../../nativeblue/*.o
 
