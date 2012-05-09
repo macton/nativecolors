@@ -9,7 +9,7 @@
 //   - Multiple reads can be aquired so long as no write is aquired
 //   - Multiple writes can be aquired so long as no read is aquired
 //     - A constraint of one write lock (or at least contrained to a 
-//       single thread) could be added, since it's not generally 
+//       single thread) could be added, but it's not generally 
 //       used (by me) in a way where that'd make a difference.
 //   - None of the typical pthread error checking is done
 // ----------------------------------------------------------------------
