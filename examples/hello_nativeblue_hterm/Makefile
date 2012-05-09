@@ -3,7 +3,7 @@
 # --------------------------------------------------------------------
 
 PROJECT  := hello
-SOURCES  := hello.c ../../nativeblack/nativeblack.c ../../nativeblue/nativeblue.c
+SOURCES  := hello.c ../../nativeblack/nativeblack.c ../../nativeblue/nativeblue.c ../../nativeblue/pthread_rwlock.c
 DEPS     := 
 
 export PROJECT

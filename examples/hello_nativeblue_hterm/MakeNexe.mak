@@ -7,9 +7,8 @@ WARNINGS := -Wno-long-long -Wall -pedantic
 CFLAGS   := -std=c99 $(WARNINGS)
 ARFLAGS  := rcs
 OSNAME   := $(shell python $(NACL_SDK_ROOT)/tools/getos.py)
-LDFLAGS  := -lppapi_gles2 -lppapi -L../nativeblack
-
-CFLAGS   += -Xlinker --wrap -Xlinker write
+LDFLAGS  := -lppapi_gles2 -lppapi
+CFLAGS   += -Xlinker --wrap -Xlinker write -D_GNU_SOURCE
 CFLAGS   += -I../..
 
 # --------------------------------------------------------------------
