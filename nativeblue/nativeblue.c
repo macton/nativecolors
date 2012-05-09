@@ -2,10 +2,10 @@
 
 #include <nativeblack/nativeblack.h>
 #include "nativeblue.h"
+#include "pthread_rwlock.h"
 #include <string.h>
 #include <stdio.h>
 #include <errno.h>
-#include <pthread.h>
 #include <alloca.h>
 #include <ctype.h>
 
@@ -63,7 +63,7 @@ struct NaBlueWriteCommand
   size_t  m_Count;
 };
 
-void FlushWrite(void);
+void FlushCommands(void);
 
 // --------------------------------------------------------------------------
 // Scratch allocation used by browser command buffer
@@ -78,6 +78,7 @@ size_t NaBlueDefaultScratchSize( void )
   return 64 * 1024;
 }
 
+// Note any replacement should guarantee alignment of at least 32 bits.
 char* NaBlueAlloc( size_t size )
 {
   return (char*)malloc( size );
@@ -108,9 +109,39 @@ static char*             s_NaBlueCommandScratch[2]       = { NULL, NULL };
 static size_t            s_NaBlueCommandScratchOffset[2] = { 0,    0    };
 static size_t            s_NaBlueCommandScratchSize[2]   = { 0,    0    };
 static int               s_NaBlueCommandIndex            = 0;
-static pthread_mutex_t   s_NaBlueCommandLock             = PTHREAD_MUTEX_INITIALIZER;
 
-static int s_DebugWriteCount = 0;
+// --------------------------------------------------------------------------
+// s_NaBlueCommandAllocLock: 
+//   - Since other (unknown) threads can be allocating from the same pool, they
+//     must lock each other out. 
+//   - #todo per-thread pool.
+//   - However, the FlushCommands thread does not need to aquire this lock, it just
+//     needs to make sure the threads can't be writing when it swaps the buffer.
+//   - See #note-01 below.
+// --------------------------------------------------------------------------
+
+static pthread_mutex_t   s_NaBlueCommandAllocLock        = PTHREAD_MUTEX_INITIALIZER;
+
+// --------------------------------------------------------------------------
+// s_NaBlueCommandWriteLock may need some clarification: #note-01
+//   - Some poeple might say this "an abuse" of the rwlock. I say it was just mis-named.
+//   - Alternatively, you could think of it as a rwlock on g_NaBlueCommandIndex
+//   - No writer thread needs to lock any other writer thread out. Since they're already
+//     constrained by the allocation to be working in separate, unrelated memory.
+//   - However, the FlushCommands thread can't swap buffers until all the writes are 
+//     ready.
+//   - So:
+//     1) the reader (NaBlueCommandSwapBuffers) must aquire a write lock to make sure they
+//        are complete.
+//     2) the writers (threads generating commands) each aquire a read lock while writing.
+//     3) This will ensure that all writes are complete before swap.
+//   - #todo g_NaBlueCommandWriteLock can be reduced to a single-writer/single-reader
+//           "lock" per writing thread. 
+//           - But SwapBuffers may still need to spin for lack of work while waiting for
+//             the last write from the last thread (potentially)
+// --------------------------------------------------------------------------
+
+static pthread_rwlock_t  s_NaBlueCommandWriteLock      = PTHREAD_RWLOCK_INITIALIZER;
 
 int NaBlueCommandStartup( void )
 {
@@ -149,8 +180,12 @@ void NaBlueCommandShutdown( void )
   s_NaBlueCommandScratchOffset[1] = 0;
 }
 
+// Note: You need to lock s_NaBlueCommandLock before calling this. 
+//       And don't unlock until the memory has been filled and is ready.
 NaBlueCommand* NaBlueCommandAllocate( int cmd, size_t size )
 {
+  pthread_mutex_lock(&s_NaBlueCommandAllocLock);
+
   size_t alloc_size = sizeof( NaBlueCommand ) + size;
 
   int    scratch_index     = s_NaBlueCommandIndex;
@@ -171,6 +206,7 @@ NaBlueCommand* NaBlueCommandAllocate( int cmd, size_t size )
 
     if ( !scratch_new )
     {
+      pthread_mutex_unlock(&s_NaBlueCommandAllocLock);
       return NULL; 
     }
 
@@ -189,17 +225,34 @@ NaBlueCommand* NaBlueCommandAllocate( int cmd, size_t size )
   
   s_NaBlueCommandScratchOffset[ scratch_index ] += alloc_size;
 
+  pthread_mutex_unlock(&s_NaBlueCommandAllocLock);
+
   return ( command );
 }
 
 void NaBlueCommandSwapBuffers( void )
 {
-  pthread_mutex_lock(&s_NaBlueCommandLock);
+  // Aquire a *write* lock to ensure that all threads are finished writing. See #note-01
+  pthread_rwlock_wrlock( &s_NaBlueCommandWriteLock );
+
+  // Note s_NaBlueCommandAllocLock doesn't need to be aquired since it's guaranteed to only 
+  // be referring to the buffer that's currently being written to by the writing threads.
+  //   - At this point there are none, guaranteed by the above.
+
+  // #todo s_NaBlueCommandWriteLock could be, in principal, double buffered:
+  //       - The read lock could be aquired as soon as the index is flipped
+  //       - So make sure there's a fence that guaratees that happens after the offset clear.
+  //       - The writers could be holding the lock from the previous buffer in that case
+  //         (before this index swap), so that would have to be resolved.
+
+  s_NaBlueCommandScratchOffset[ s_NaBlueCommandIndex^1 ] = 0;
+
+  // ...would need a fence here... see above
 
   s_NaBlueCommandIndex ^= 1;
-  s_NaBlueCommandScratchOffset[ s_NaBlueCommandIndex ] = 0;
 
-  pthread_mutex_unlock(&s_NaBlueCommandLock);
+  // Alow writing threads to continue...
+  pthread_rwlock_unlock( &s_NaBlueCommandWriteLock );
 }
 
 NaBlueCommand* NaBlueCommandGetNext( size_t offset )
@@ -283,7 +336,7 @@ void NaBlackRenderFrame()
     g_MainThreadStatus.m_Status = kMainStatusClosed;
   }
 
-  FlushWrite();
+  FlushCommands();
 }
 
 // --------------------------------------------------------------------------
@@ -313,14 +366,16 @@ void* main_entry(void* parm)
 
 int __wrap_write(int fd, void* buf, size_t count)
 {
-  pthread_mutex_lock(&s_NaBlueCommandLock);
+  // Aquire lock to let SwapBuffers know we're still writing. See #note-01
+  // The only time this should ever block is if we're actually in the middle of SwapBuffers()
+  pthread_rwlock_rdlock( &s_NaBlueCommandWriteLock );
 
   size_t         packet_size = sizeof( NaBlueWriteCommand ) + count;
-  NaBlueCommand* command     = NaBlueCommandAllocate( kNaBlueCommandWrite, packet_size );
+  NaBlueCommand* command     = NaBlueCommandAllocate( kNaBlueCommandWrite, packet_size  );
 
   if ( !command )
   {
-    pthread_mutex_unlock(&s_NaBlueCommandLock);
+    pthread_rwlock_unlock( &s_NaBlueCommandWriteLock );
     return (0);
   }
 
@@ -332,13 +387,12 @@ int __wrap_write(int fd, void* buf, size_t count)
 
   memcpy( write_buffer, buf, count );
 
-  s_DebugWriteCount++;
-  pthread_mutex_unlock(&s_NaBlueCommandLock);
+  pthread_rwlock_unlock( &s_NaBlueCommandWriteLock );
 
   return ( count );
 }
 
-void FlushWrite(void)
+void FlushCommands(void)
 {
   size_t         command_offset = 0;
   NaBlueCommand* command;
