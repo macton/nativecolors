@@ -71,19 +71,23 @@ int pthread_rwlock_unlock( pthread_rwlock_t* lock )
 
   while (1)
   {
-    read_lock  = __sync_fetch_and_add( read_count,  0 ); 
-    write_lock = __sync_fetch_and_add( write_count, 0 ); 
+    for (int i=0;i<kRwLockSpinCount;i++)
+    {
+      read_lock  = __sync_fetch_and_add( read_count,  0 ); 
+      write_lock = __sync_fetch_and_add( write_count, 0 ); 
 
-    if (( read_lock > 0 ) && ( write_lock == 0 ))
-    {
-      __sync_fetch_and_sub( read_count, 1 ); 
-      return (0);
+      if (( read_lock > 0 ) && ( write_lock == 0 ))
+      {
+        __sync_fetch_and_sub( read_count, 1 ); 
+        return (0);
+      }
+    
+      if (( write_lock > 0 ) && ( read_lock == 0 ))
+      {
+        __sync_fetch_and_sub( write_count, 1 ); 
+        return (0);
+      }
     }
-  
-    if (( write_lock > 0 ) && ( read_lock == 0 ))
-    {
-      __sync_fetch_and_sub( write_count, 1 ); 
-      return (0);
-    }
+    pthread_yield();
   }
 }
