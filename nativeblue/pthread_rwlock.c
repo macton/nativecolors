@@ -1,5 +1,18 @@
-// Super quick-and-dirty implementation of pthread_rwlock
-// For NaCl-newlib
+// ----------------------------------------------------------------------
+// Super quick-and-dirty implementation of pthread_rwlock for NaCl newlib
+// macton@insomniacgames.com
+// ----------------------------------------------------------------------
+
+// ----------------------------------------------------------------------
+// Obvious differences between this and an actual implementation.
+//   - It's actually two mutually exclusive locks (read and write)
+//   - Multiple reads can be aquired so long as no write is aquired
+//   - Multiple writes can be aquired so long as no read is aquired
+//     - A constraint of one write lock (or at least contrained to a 
+//       single thread) could be added, since it's not generally 
+//       used (by me) in a way where that'd make a difference.
+//   - None of the typical pthread error checking is done
+// ----------------------------------------------------------------------
 
 #include "pthread_rwlock.h"
 
