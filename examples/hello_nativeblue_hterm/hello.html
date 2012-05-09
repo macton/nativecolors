@@ -1,27 +1,6 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <!-- PubSub is currently unscoped (it's not in hterm.*) -->
-    <script src='../../hterm/js/pubsub.js'></script>
-    <script src='../../hterm/js/dialogs.js'></script>
-
-    <!-- hterm.* things -->
-    <script src='../../hterm/js/hterm.js'></script>
-    <script src='../../hterm/js/scrollport.js'></script>
-    <script src='../../hterm/js/terminal.js'></script>
-    <script src='../../hterm/js/terminal_io.js'></script>
-    <script src='../../hterm/js/options.js'></script>
-    <script src='../../hterm/js/screen.js'></script>
-    <script src='../../hterm/js/text_attributes.js'></script>
-    <script src='../../hterm/js/colors.js'></script>
-    <script src='../../hterm/js/vt.js'></script>
-    <script src='../../hterm/js/keyboard.js'></script>
-    <script src='../../hterm/js/default_keymap.js'></script>
-    <script src='../../hterm/js/preference_manager.js'></script>
-    <script src='../../nativeblue/nativeblueterm.js'></script>
-
-    <script src='hello.js'></script>
-
     <link rel='stylesheet' href='../../hterm/css/dialogs.css'></link>
 
     <style>
@@ -44,5 +23,31 @@
   </head>
   <body>
     <div id='terminal'></div>
+
+    <!-- PubSub is currently unscoped (it's not in hterm.*) -->
+    <script src='../../hterm/js/pubsub.js'></script>
+    <script src='../../hterm/js/dialogs.js'></script>
+
+    <!-- hterm.* things -->
+    <script src='../../hterm/js/hterm.js'></script>
+    <script src='../../hterm/js/scrollport.js'></script>
+    <script src='../../hterm/js/terminal.js'></script>
+    <script src='../../hterm/js/terminal_io.js'></script>
+    <script src='../../hterm/js/options.js'></script>
+    <script src='../../hterm/js/screen.js'></script>
+    <script src='../../hterm/js/text_attributes.js'></script>
+    <script src='../../hterm/js/colors.js'></script>
+    <script src='../../hterm/js/vt.js'></script>
+    <script src='../../hterm/js/keyboard.js'></script>
+    <script src='../../hterm/js/default_keymap.js'></script>
+    <script src='../../hterm/js/preference_manager.js'></script>
+    <script src='../../nativeblue/nativeblueterm.js'></script>
+
+    <script>
+      window.onload = function() {
+        NativeBlueTerm( '#terminal', 'hello.nmf' );
+      };
+    </script>
+
   </body>
 </html>
