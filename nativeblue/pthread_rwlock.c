@@ -5,7 +5,6 @@
 
 // ----------------------------------------------------------------------
 // Obvious differences between this and an actual implementation.
-//   - It's actually two mutually exclusive locks (read and write)
 //   - Multiple reads can be aquired so long as no write is aquired
 //   - Multiple writes can be aquired so long as no read is aquired
 //     - A constraint of one write lock (or at least contrained to a 
