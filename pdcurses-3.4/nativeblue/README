@@ -1,0 +1,19 @@
+PDCurses for Native Client
+==========================
+Mike Acton <macton@insomniacgames.com> @mike_acton
+
+This directory contains PDCurses source code files specific to Native Client
+
+Building
+--------
+
+- make 
+-   Will make newlib versions of libcurses.a for x86_32 and x86_65
+-   Will make devel, debug and publish variations of each.
+-   See Makefile for other options.
+
+Distribution Status
+-------------------
+
+The files in this directory are released to the Public Domain.
+
