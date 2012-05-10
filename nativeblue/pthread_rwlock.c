@@ -13,16 +13,32 @@
 //   - None of the typical pthread error checking is done
 // ----------------------------------------------------------------------
 
+// You know what would be better here? If there was an actual implementation
+// of the gcc __atomic builtins available. Specifically, some further (non-full
+// baerrier) optimizations could be done using the ACQUIRE/RELEASE mode.
+// ... sadly (1) they aren't available that I can tell.
+//           (2) even if they were, the reference implementation is based on the
+//               __sync primitives anyway.
+
 #include "pthread_rwlock.h"
 
 enum
 {
-  kRwLockSpinCount = 3
+  kRwLockSpinCount = 12,
+  kRwLockSleepMs   = 8 
 };
 
 int pthread_yield( void )
 {
-  sched_yield();
+  // instead of sched_yield() use nanosleep
+  // Reference: libatomic_ops http://www.hpl.hp.com/research/linux/atomic_ops/index.php4
+  // See also: https://groups.google.com/d/topic/native-client-discuss/khBNKzdDZ0w/discussion
+
+  struct timespec ts;
+  ts.tv_sec  = 0;
+  ts.tv_nsec = 100000 * kRwLockSleepMs;
+  nanosleep(&ts, 0);
+
   return (0);
 }
 
