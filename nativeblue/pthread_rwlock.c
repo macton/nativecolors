@@ -25,7 +25,7 @@
 enum
 {
   kRwLockSpinCount = 12,
-  kRwLockSleepMs   = 8 
+  kRwLockSleepMs   = 4 
 };
 
 int pthread_yield( void )
@@ -36,7 +36,7 @@ int pthread_yield( void )
 
   struct timespec ts;
   ts.tv_sec  = 0;
-  ts.tv_nsec = 100000 * kRwLockSleepMs;
+  ts.tv_nsec = 1000000 * kRwLockSleepMs;
   nanosleep(&ts, 0);
 
   return (0);
