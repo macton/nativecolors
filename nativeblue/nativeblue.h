@@ -3,11 +3,31 @@
 #include <stdio.h>
 #include <stdint.h>
 
-// Returns a url-encoded version of str
-int strnurlencode( char* dest, const char* str, size_t max_len );
+// --------------------------------------------------------------------------
+// int strnurlencode( char* dest, int dest_max_len, const char* str, size_t str_max_len ) 
+// int strnurldecode( char* dest, int dest_max_len, const char* str, size_t str_max_len ) 
+//
+// Convert to/from url encoded string
+// Example:
+// 
+//  int   encode_len = strnurlencode( NULL, 0, str, len );
+//  char* encode_str = (char*)alloca( encode_len+1 );
+//
+//  strnurlencode( encode_str, encode_len+1, str, len );
+//
+//  int   decode_len = strnurlencode( NULL, 0, encode_str, encode_len+1 );
+//  char* decode_str = (char*)alloca( decode_len+1 );
+//
+//  strnurldecode( decode_str, decode_len+1, encode_str, encode_len+1 );
+//
+//  if (strncmp(decode_str,str,len) != 0)
+//  {
+//    // -- ERROR! strings should match.
+//  }
+// --------------------------------------------------------------------------
 
-// Returns a url-decoded version of str
-int strnurldecode( char* dest, const char* str, size_t max_len );
+int strnurlencode( char* dest, int dest_max_len, const char* str, size_t str_max_len );
+int strnurldecode( char* dest, int dest_max_len, const char* str, size_t str_max_len );
 
 uint32_t next_pow2_u32(uint32_t x);
 uint64_t next_pow2_u64(uint64_t x);

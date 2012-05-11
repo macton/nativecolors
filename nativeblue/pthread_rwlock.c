@@ -20,12 +20,13 @@
 //           (2) even if they were, the reference implementation is based on the
 //               __sync primitives anyway.
 
+#include <time.h>
 #include "pthread_rwlock.h"
 
 enum
 {
-  kRwLockSpinCount = 12,
-  kRwLockSleepMs   = 4 
+  kRwLockSpinCount = 32,
+  kRwLockSleepMs   = 8 
 };
 
 int pthread_yield( void )

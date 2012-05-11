@@ -1,6 +1,12 @@
 #include <curses.h>
 #include <curspriv.h>
 #include <alloca.h>
+#include <string.h>
+#include <ctype.h>
+#include <stdint.h>
+
+int strnurlencode( char* dest, int dest_max_len, const char* str, size_t str_max_len );
+int strnurldecode( char* dest, int dest_max_len, const char* str, size_t str_max_len );
 
 /**********************************************************************************
   DESCRIPTION
@@ -31,12 +37,7 @@ void PDC_gotoyx(int y, int x)
 void PDC_transform_line(int lineno, int x, int len, const chtype* srcp)
 {
   int j;
-
-  // hterm.Terminal.prototype.setAbsoluteCursorPosition
-  // hterm.Terminal.prototype.interpret
-
   char* out = (char*)alloca( len+1 );
-
 
   for (j = 0; j < len; j++)
   {
@@ -45,8 +46,8 @@ void PDC_transform_line(int lineno, int x, int len, const chtype* srcp)
   }
   out[len] = 0;
 
-  PDC_LOG(("PDC_transform_line %d,%d,%d,%s\n",lineno,x,len,out));
   printf("[%d;%dH%s",lineno,x,out);
   fflush(stdout);
-}
 
+  PDC_LOG(("PDC_transform_line %d,%d,%d,%s\n",lineno,x,len,out));
+}

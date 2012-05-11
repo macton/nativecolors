@@ -78,6 +78,8 @@ void reindeer(void);
 
 int y_pos, x_pos;
 
+extern bool pdc_trace_on;
+
 WINDOW *treescrn, *treescrn2, *treescrn3, *treescrn4, *treescrn5,
        *treescrn6, *treescrn7, *treescrn8, *dotdeer0, *stardeer0,
        *lildeer0, *lildeer1, *lildeer2, *lildeer3, *middeer0,

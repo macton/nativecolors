@@ -4,7 +4,11 @@
 
 PROJECT  := xmas
 DEPS     := 
-SOURCES  := xmas.c ../../nativeblack/nativeblack.c ../../nativeblue/nativeblue.c ../../nativeblue/pthread_rwlock.c
+SOURCES  := xmas.c 
+
+ifneq (gcc,$(filter gcc,$(MAKECMDGOALS)))
+SOURCES  += ../../nativeblack/nativeblack.c ../../nativeblue/nativeblue.c ../../nativeblue/pthread_rwlock.c
+endif
 
 export PROJECT
 export SOURCES

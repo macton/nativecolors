@@ -31,11 +31,13 @@ NativeBlueTerm = function( terminal_id, nmf ) {
   hterm.NativeBlue.prototype.commandName = 'nativeblue';
   
   hterm.NativeBlue.prototype.run = function() {
-    this.io  = this.argv_.io.push();
+    this.io         = this.argv_.io.push();
+    this.terminal   = this.io.terminal_;
+    this.scrollPort = this.terminal.scrollPort_;
     var self = this;
   
     this.initPlugin( function() {
-    self.io.println('READY.');
+    // self.io.println('READY.');
     });
   };
   
@@ -72,7 +74,7 @@ NativeBlueTerm = function( terminal_id, nmf ) {
   
     if ( info.func == 'write' ) {
       if ( info.dev == '/dev/stdout' ) {
-        self.io.println( decodeURIComponent( info.data ) );
+        self.terminal.interpret( decodeURIComponent( info.data ) );
       }
     }
   };

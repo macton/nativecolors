@@ -10,10 +10,11 @@ OSNAME   := $(shell python $(NACL_SDK_ROOT)/tools/getos.py)
 LDFLAGS  :=
 ifneq (gcc,$(filter gcc,$(MAKECMDGOALS)))
 LDFLAGS  += -lppapi_gles2 -lppapi
-CFLAGS   += -Xlinker --wrap -Xlinker write -D_GNU_SOURCE
+CFLAGS   += -Xlinker --wrap -Xlinker write
 endif
 
-CFLAGS   += -I..
+CFLAGS   += -D_GNU_SOURCE
+CFLAGS   += -I.. -I../..
 CURSES   := curses
 
 # --------------------------------------------------------------------
@@ -159,7 +160,8 @@ clean:
 # Special rules
 # --------------------------------------------------------------------
 
+ifneq (gcc,$(filter gcc,$(MAKECMDGOALS)))
 xmas.$(OBJEXT).o : xmas.c $(DEPS)
 	$(CC) $(CFLAGS) -c $< -o $@.main.o
 	$(OBJCOPY) $@.main.o $@ --redefine-sym main=nablue_main
- 	
+endif

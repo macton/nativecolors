@@ -1,5 +1,5 @@
 #include <curses.h>
-#include <unistd.h>
+#include <time.h>
 
 /**********************************************************************************
   DESCRIPTION
@@ -28,7 +28,14 @@ void PDC_beep(void)
 
 void PDC_napms(int ms)
 {
-  usleep(ms * 1000);
+  int total_ns = ms * 1000000;
+  int sec      = total_ns / ( 1000000 * 1000 ); 
+  int ns       = total_ns - ( sec * ( 1000000 * 1000 ) );
+
+  struct timespec ts;
+  ts.tv_sec  = sec;
+  ts.tv_nsec = ns;
+  nanosleep(&ts, 0);
 }
 
 

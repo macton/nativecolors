@@ -9,7 +9,7 @@ ARFLAGS  := rcs
 OSNAME   := $(shell python $(NACL_SDK_ROOT)/tools/getos.py)
 CFLAGS   += -I..
 CFLAGS   += -DPDC_PLATFORM="\"nativeblue-hterm\""
-CFLAGS   += -DPDCDEBUG
+CFLAGS   += -D_GNU_SOURCE
 
 # --------------------------------------------------------------------
 # glibc (newlib if not specified)
