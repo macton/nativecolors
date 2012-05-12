@@ -164,4 +164,8 @@ ifneq (gcc,$(filter gcc,$(MAKECMDGOALS)))
 ../demos/xmas.$(OBJEXT).o : ../demos/xmas.c $(DEPS)
 	$(CC) $(CFLAGS) -c $< -o $@.main.o
 	$(OBJCOPY) $@.main.o $@ --redefine-sym main=nablue_main
+
+../demos/worm.$(OBJEXT).o : ../demos/worm.c $(DEPS)
+	$(CC) $(CFLAGS) -c $< -o $@.main.o
+	$(OBJCOPY) $@.main.o $@ --redefine-sym main=nablue_main
 endif
