@@ -218,10 +218,10 @@ static int _pdc_vsscanf(const char *buf, const char *fmt, va_list arg_ptr)
                 assign = FALSE;
                 ++fmt;
             }
-            if (isdigit(*fmt))
+            if (isdigit((int)*fmt))
             {
                 width = 0;
-                while (isdigit(*fmt))
+                while (isdigit((int)*fmt))
                     width = width * 10 + (*fmt++ - '0');
                 if (!width)
                     width = INT_MAX;
