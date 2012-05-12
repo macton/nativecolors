@@ -1,0 +1,187 @@
+PDCURSES FOR ECMA-48 TERMINALS
+============================================================================
+
+This is a minimal port of PDCurses for terminals (or environments that can
+emulate or communicate with remove terminals) that support ECMA-48 
+
+i.e. ANSI escape codes. 
+Also see: http://en.wikipedia.org/wiki/ANSI_escape_code
+
+It's a template port to make porting to limited platforms marginally easier.
+The goal is to minimize and enumerate the functions required.
+
+e.g. Embedded systems or platforms that may only provide no or partial 
+support for default libraries
+
+Notes are provided below (REQUIREMENTS) for every external function that is
+used, where they are called, where they are expected to be and how the may
+be replaced or removed, as needed by your environment. Requirements of
+files in the ../demos directory are not enumerated.
+
+
+LIMITATIONS
+============================================================================
+
+- No mouse support
+- No cut and paste support
+- No terminal resize support
+
+
+REQUIREMENTS 
+============================================================================
+
+This port requires the following functions to be implemented and
+where they are assumed to be:
+
+../pdcurses/window.c
+----------------------------------------------------------------------------
+<stdlib.h>
+void *malloc(size_t size);
+void free(void *ptr);
+void *calloc(size_t nmemb, size_t size);
+
+NOTE: For environments which do not have dynamic memory or need to minimize use,
+      replace the following functions:
+
+      WINDOW *PDC_makenew(int nlines, int ncols, int begy, int begx)
+      WINDOW *PDC_makelines(WINDOW *win)
+      int delwin(WINDOW *win)
+
+
+../pdcurses/color.c
+-------------------
+#include <stdlib.h>
+char* getenv(const char* name);
+
+NOTE: "PDC_ORIGINAL_COLORS" is checked for a non-NULL value.
+
+// If the environment variable PDC_ORIGINAL_COLORS
+// is set at the time start_color() is called, that's equivalent to
+// calling use_default_colors().
+
+../pdcurses/initscr.c
+---------------------
+#include <stdlib.h>
+int sprintf(char *str, const char *format, ...);
+int fprintf(FILE *stream, const char *format, ...);
+void exit(int status);
+
+NOTE: fprintf is only used to stderr and only in fatal error conditions. It 
+      can be safely replaced.
+
+NOTE: exit is only used in fatal error conditions. It can be safely replaced.
+
+../pdcurses/refresh.c
+---------------------
+#include <string.h> 
+void *memcpy(void *dest, const void *src, size_t n);
+
+../pdcurses/slk.c
+-----------------
+<stdlib.h>
+void free(void *ptr);
+void *calloc(size_t nmemb, size_t size);
+
+NOTE: For environments which do not have dynamic memory or need to minimize use,
+      and wish to remove support for soft label keys, remove slk.c from the build
+      and fix up the following functions:
+
+      - in ../pdcurses/getch.c _mouse_key() remove reference to PDC_mouse_in_slk()
+      - in ../pdcurses/initscr.c remove reference to PDC_slk_intialize()
+      - in ../pdcurses/initscr.c remove reference to PDC_slk_free()
+      - in ../pdcurses/initscr.c remove reference to slk_noutrefresh()
+
+../pdcurses/debug.c
+-------------------
+#include <stdio.h>
+FILE *fopen(const char *path, const char *mode);
+int fclose(FILE *fp);
+int fprintf(FILE *stream, const char *format, ...);
+
+#include <time.h>
+time_t time(time_t *t);
+struct tm *localtime(const time_t *timep);
+size_t strftime(char *s, size_t max, const char *format, const struct tm *tm);
+clock_t clock(void);
+
+NOTE: fopen is only called once: dbfp = fopen("trace", "a");
+
+NOTE: debug.c (and the trace interface) can be safely removed for
+      environments which do not have time or general file write interface.
+
+NOTE: When removing debug.c make sure PDCDEBUG is not defined.
+
+../pdcurses/pad.c
+-----------------
+#include <string.h> 
+void *memcpy(void *dest, const void *src, size_t n);
+
+../pdcurses/printw.c
+--------------------
+#include <string.h> 
+int vsprintf(char *s, const char *format, va_list ap);
+int vsnprintf(char *s, size_t n, const char *format, va_list ap);
+
+NOTE: vsnprintf is used instead of vsprintf if HAVE_VSNPRINTF is defined.
+
+pdcdisp.c
+---------
+#include <stdio.h>
+int printf(const char *format, ...);
+int fflush(FILE *stream);
+
+NOTE: fflush is only called with stdout
+
+pdcgetsc.c
+----------
+#include <sys/ioctl.h>
+int ioctl(int d, int request, ...);           
+
+NOTE: only ZERO will be used for d
+
+NOTE: TIOCGWINSZ is used to determine terminal dimensions, it can
+       be safely replaced.
+
+pdcsetsc.c
+----------
+#include <stdio.h>
+int printf(const char *format, ...);
+
+pdcutil.c
+---------
+#include <stdio.h>
+int printf(const char *format, ...);
+int fflush(FILE *stream);
+
+#include <time.h>
+int nanosleep(const struct timespec *req, struct timespec *rem);
+
+#include <stdlib.h>
+char* getenv(const char* name);
+
+NOTE: fflush is only called with stdout
+
+NOTE: nanosleep can be safely replaced with any millisecond level sleep.
+
+NOTE: getenv("TERM") is checked for a terminal name. It can be replaced
+      with a constant string.
+
+
+BUILDING
+============================================================================
+
+In an environment that requires this port, it's unlikely that the
+supplied makefile will be useful as-is. However, it's provided for
+reference and should build in any unix-like environment.
+
+
+DISTRIBUTION STATUS
+============================================================================
+
+The files in this directory are released to the Public Domain.
+
+
+ACKNOWLEDGEMENTS 
+============================================================================
+
+ECMA-48 terminal port was provided by Mike Acton <macton@gmail.com>
