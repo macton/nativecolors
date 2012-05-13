@@ -3,14 +3,14 @@
 # --------------------------------------------------------------------
 
 PROJECT  := hello
-SOURCES  := hello.c ../../nativeblack/nativeblack.c ../../nativeblue/nativeblue.c ../../nativeblue/pthread_rwlock.c
 DEPS     := 
+SOURCES  := hello.c
 
 export PROJECT
 export SOURCES
 export DEPS
 
-all: publish devel devel-debug glibc-publish glibc-devel glibc-devel-debug
+all: publish devel devel-debug
 
 publish:
 	make -f MakeNexe.mak x86_32 
@@ -24,22 +24,13 @@ devel-debug:
 	make -f MakeNexe.mak x86_32 devel debug
 	make -f MakeNexe.mak x86_64 devel debug
 
-glibc-publish:
-	make -f MakeNexe.mak x86_32 glibc  
-	make -f MakeNexe.mak x86_64 glibc  
-
-glibc-devel:
-	make -f MakeNexe.mak x86_32 glibc devel
-	make -f MakeNexe.mak x86_64 glibc devel
-
-glibc-devel-debug:
-	make -f MakeNexe.mak x86_32 glibc devel debug
-	make -f MakeNexe.mak x86_64 glibc devel debug
+gcc:
+	make -f MakeNexe.mak gcc
+	make -f MakeNexe.mak gcc
 
 .PHONY: clean
 clean:
 	rm -f *.o
 	rm -f *.nexe
-	rm -f ../../nativeblack/*.o
-	rm -f ../../nativeblue/*.o
+	rm -f hello-gcc
 
