@@ -3,14 +3,12 @@
 # Project config
 # --------------------------------------------------------------------
 
-NATIVE_COLORS_ROOT := ../../
-
 WARNINGS := -Wno-long-long -Wall -pedantic
 CFLAGS   := -std=c99 $(WARNINGS)
 ARFLAGS  := rcs
 OSNAME   := $(shell python $(NACL_SDK_ROOT)/tools/getos.py)
 CFLAGS   += -I..
-CFLAGS   += -I$(NATIVE_COLORS_ROOT)
+CFLAGS   += -I$(NATIVECOLORS_ROOT)/include
 CFLAGS   += -D_GNU_SOURCE
 
 # --------------------------------------------------------------------

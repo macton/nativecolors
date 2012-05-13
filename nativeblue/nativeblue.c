@@ -417,10 +417,10 @@ int ioctl(int d, unsigned long request, ...)
         struct winsize* size = va_arg(argp, struct winsize*);    
   
         // Hack in a size for the moment...
-        size->ws_row    = 120;
-        size->ws_col    = 120;
-        size->ws_xpixel = 2400;
-        size->ws_ypixel = 2400;
+        size->ws_col    = 80;
+        size->ws_row    = 25;
+        size->ws_xpixel = 0;
+        size->ws_ypixel = 0;
         exit_code = 0;
       }
     }
