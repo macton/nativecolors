@@ -31,38 +31,33 @@ NativeBlueTerm = function( terminal_id, nmf ) {
   hterm.NativeBlue.prototype.commandName = 'nativeblue';
   
   hterm.NativeBlue.prototype.run = function() {
-    this.io         = this.argv_.io.push();
-    this.terminal   = this.io.terminal_;
-    this.scrollPort = this.terminal.scrollPort_;
     var self = this;
-  
-    this.initPlugin( function() {
-    // self.io.println('READY.');
-    });
-  };
-  
-  hterm.NativeBlue.prototype.initPlugin = function( on_complete ) {
-    var self = this;
-  
+
+    self.io         = self.argv_.io.push();
+    self.terminal   = self.io.terminal_;
+    self.scrollPort = self.terminal.scrollPort_;
+
     function onPluginLoaded() {
       // self.io.println('PLUGIN_LOADING_COMPLETE.');
-      on_complete();
+
+      self.io.onTerminalResize = self.onTerminalResize.bind(self);
     };
   
-    // this.io.println('PLUGIN LOADING...');
+    // self.io.println('PLUGIN LOADING...');
   
-    this.plugin = window.document.createElement('embed');
-    this.plugin.style.cssText =
+    self.plugin = window.document.createElement('embed');
+    self.plugin.style.cssText =
         ('position: absolute;' +
          'top: -99px' +
          'width: 0;' +
          'height: 0;');
-    this.plugin.setAttribute('src', window.nmf );
-    this.plugin.setAttribute('type', 'application/x-nacl');
-    this.plugin.addEventListener('load', onPluginLoaded);
-    this.plugin.addEventListener('message', this.onPluginMessage.bind(this));
+    self.plugin.setAttribute('src', window.nmf );
+    self.plugin.setAttribute('type', 'application/x-nacl');
+    self.plugin.addEventListener('load', onPluginLoaded);
+    self.plugin.addEventListener('message', self.onPluginMessage.bind(self));
+
   
-    document.body.insertBefore(this.plugin, document.body.firstChild);
+    document.body.insertBefore(self.plugin, document.body.firstChild);
   };
   
   hterm.NativeBlue.prototype.onPluginMessage = function(msg) {
@@ -77,6 +72,11 @@ NativeBlueTerm = function( terminal_id, nmf ) {
         self.terminal.interpret( decodeURIComponent( info.data ) );
       }
     }
+  };
+
+  hterm.NativeBlue.prototype.onTerminalResize = function(width, height) {
+    // var str = JSON.stringify({name: name, arguments: arguments});
+    // this.plugin_.postMessage(str);
   };
 
   //

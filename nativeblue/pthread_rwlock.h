@@ -1,5 +1,6 @@
 #pragma once
 
+#define _MULTI_THREADED
 #include <pthread.h>
 #include <stdint.h>
 

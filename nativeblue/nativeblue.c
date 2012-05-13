@@ -1,13 +1,17 @@
-#define _MULTI_THREADED
-
-#include <nativeblack/nativeblack.h>
-#include "nativeblue.h"
-#include "pthread_rwlock.h"
 #include <string.h>
 #include <stdio.h>
 #include <errno.h>
 #include <alloca.h>
 #include <ctype.h>
+#include <stdarg.h>
+#include <nativeblack/nativeblack.h>
+
+#define _MULTI_THREADED
+#include <pthread.h>
+
+#include <sys/ioctl.h>
+#include "nativeblue.h"
+#include "pthread_rwlock.h"
 
 int    nablue_main(int argc, char **argv);
 void*  main_entry(void *parm);
@@ -389,6 +393,42 @@ int __wrap_write(int fd, void* buf, size_t count)
   pthread_rwlock_unlock( &s_NaBlueCommandWriteLock );
 
   return ( count );
+}
+
+int ioctl(int d, unsigned long request, ...)
+{
+  int     exit_code = EINVAL;
+  va_list argp;
+
+  va_start( argp, request );
+
+  switch ( request )
+  {
+    // Get terminal dimensions
+    case TIOCGWINSZ:
+    {
+      // ATM only ZERO is supported for d
+      if ( d != 0 )
+      {
+        exit_code = EBADF;
+      }
+      else 
+      { 
+        struct winsize* size = va_arg(argp, struct winsize*);    
+  
+        // Hack in a size for the moment...
+        size->ws_row    = 120;
+        size->ws_col    = 120;
+        size->ws_xpixel = 2400;
+        size->ws_ypixel = 2400;
+        exit_code = 0;
+      }
+    }
+    break;
+  }
+ 
+  va_end( argp );
+  return (exit_code);
 }
 
 void FlushCommands(void)
