@@ -2,7 +2,8 @@
 
 int main( void )
 {
-  printf("Hello, World!\r\n");
+  // Added test for hterm inverse bug. This text should be red.
+  printf("\033[31;27mHello, World!\r\n");
 
   return (0);
 }
