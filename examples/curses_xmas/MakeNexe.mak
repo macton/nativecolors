@@ -9,7 +9,6 @@ ARFLAGS     := rcs
 OSNAME      := $(shell python $(NACL_SDK_ROOT)/tools/getos.py)
 LDFLAGS     :=
 ifneq (gcc,$(filter gcc,$(MAKECMDGOALS)))
-LDFLAGS     += -lppapi_gles2 -lppapi
 CFLAGS      += -Xlinker --wrap -Xlinker write
 endif
 
@@ -86,10 +85,12 @@ endif
 
 
 ifeq (devel,$(filter devel,$(MAKECMDGOALS)))
-CFLAGS   += -DDEVEL
-OBJEXT   := $(OBJEXT)-devel
-PROJECT  := $(PROJECT)-devel
-CURSES   := $(CURSES)-devel
+CFLAGS      += -DDEVEL
+OBJEXT      := $(OBJEXT)-devel
+PROJECT     := $(PROJECT)-devel
+CURSES      := $(CURSES)-devel
+NATIVEBLUE  := $(NATIVEBLUE)-devel
+NATIVEBLACK := $(NATIVEBLACK)-devel
 endif
 
 # --------------------------------------------------------------------
@@ -141,7 +142,10 @@ glibc:
 LDFLAGS  += -L$(NATIVECOLORS_ROOT)/lib -l$(CURSES)
 
 ifneq (gcc,$(filter gcc,$(MAKECMDGOALS)))
-LDFLAGS  += -l$(NATIVEBLUE) -l$(NATIVEBLACK)
+LDFLAGS  += -l$(NATIVEBLUE)
+LDFLAGS  += -l$(NATIVEBLACK)
+LDFLAGS  += -lppapi_gles2
+LDFLAGS  += -lppapi
 endif
 
 OBJS     := $(patsubst %.c, %.$(OBJEXT).o, $(SOURCES))
@@ -158,10 +162,11 @@ STRING  := strip
 OBJCOPY := objcopy
 endif
 
-$(PROJECT).nexe : $(OBJS) $(NATIVECOLORS_ROOT)/lib/lib$(CURSES).a $(NATIVECOLORS_ROOT)/lib/lib$(NATIVEBLUE).a $(NATIVECOLORS_ROOT)/lib/lib$(NATIVEBLACK).a 
+# $(PROJECT).nexe : $(OBJS) $(NATIVECOLORS_ROOT)/lib/lib$(CURSES).a $(NATIVECOLORS_ROOT)/lib/lib$(NATIVEBLUE).a $(NATIVECOLORS_ROOT)/lib/lib$(NATIVEBLACK).a 
+$(PROJECT).nexe : $(OBJS)
 	$(LINK) -o $@ $^ $(CFLAGS) $(LDFLAGS)
 
-$(PROJECT) : $(OBJS) $(NATIVECOLORS_ROOT)/lib/lib$(CURSES).a 
+$(PROJECT) : $(OBJS) 
 	$(LINK) -o $@ $^ $(CFLAGS) $(LDFLAGS)
 
 %.$(OBJEXT).o : %.c $(DEPS)
