@@ -102,7 +102,7 @@ endif
 # --------------------------------------------------------------------
 
 .PHONY: x86_32
-x86_32: $(PROJECT).nexe
+x86_32: $(PROJECT).nexe 
 
 .PHONY: x86_64
 x86_64: $(PROJECT).nexe
@@ -142,10 +142,10 @@ STRING  := strip
 OBJCOPY := objcopy
 endif
 
-$(PROJECT).nexe : $(OBJS)
+$(PROJECT).nexe : $(OBJS) lib$(CURSES).a
 	$(LINK) -o $@ $^ $(CFLAGS) $(LDFLAGS)
 
-$(PROJECT) : $(OBJS)
+$(PROJECT) : $(OBJS) lib$(CURSES).a
 	$(LINK) -o $@ $^ $(CFLAGS) $(LDFLAGS)
 
 %.$(OBJEXT).o : %.c $(DEPS)

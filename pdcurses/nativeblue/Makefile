@@ -58,28 +58,47 @@ export PROJECT
 export SOURCES
 export DEPS
 
-all: publish devel devel-debug
+all: publish devel devel-debug gcc
 
 publish:
 	make -f MakeLib.mak x86_32 
 	make -f MakeLib.mak x86_64 
+	make -f xmas.mak publish
+	make -f rain.mak publish
+	make -f worm.mak publish
 
 devel:
 	make -f MakeLib.mak x86_32 devel
 	make -f MakeLib.mak x86_64 devel
+	make -f xmas.mak devel
+	make -f rain.mak devel
+	make -f worm.mak devel
 
 devel-debug:
 	make -f MakeLib.mak x86_32 devel debug
 	make -f MakeLib.mak x86_64 devel debug
+	make -f xmas.mak devel-debug
+	make -f rain.mak devel-debug
+	make -f worm.mak devel-debug
 
+# Just a local target for testing
 gcc:
 	make -f MakeLib.mak gcc
 	make -f MakeLib.mak gcc
+	make -f xmas.mak gcc
+	make -f rain.mak gcc
+	make -f worm.mak gcc
+
+install:
+	cp *.a $(NATIVECOLORS_ROOT)/lib/
+	cp ../curses.h $(NATIVECOLORS_ROOT)/include/
 
 .PHONY: clean
 clean:
 	rm -f *.o
 	rm -f *.a
 	rm -f *.nexe
-	rm -f ../pdcurses/*.o
+	rm -f rain-gcc
+	rm -f xmas-gcc
+	rm -f worm-gcc
 

@@ -3,15 +3,19 @@
 # Project config
 # --------------------------------------------------------------------
 
+NATIVE_COLORS_ROOT := ../../
+
 WARNINGS := -Wno-long-long -Wall -pedantic
 CFLAGS   := -std=c99 $(WARNINGS)
 ARFLAGS  := rcs
 OSNAME   := $(shell python $(NACL_SDK_ROOT)/tools/getos.py)
 CFLAGS   += -I..
+CFLAGS   += -I$(NATIVE_COLORS_ROOT)
 CFLAGS   += -DPDC_PLATFORM="\"nativeblue-hterm\""
 CFLAGS   += -D_GNU_SOURCE
-CFLAGS   += -DNO_IOCTL
-CFLAGS   += -DFIXED_WIDTH=80 -DFIXED_HEIGHT=80
+
+# CFLAGS   += -DNO_IOCTL
+# CFLAGS   += -DFIXED_WIDTH=80 -DFIXED_HEIGHT=80
 
 # --------------------------------------------------------------------
 # glibc (newlib if not specified)
