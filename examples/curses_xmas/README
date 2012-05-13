@@ -1,0 +1,24 @@
+xmas.c demo from pdcurses for NativeClient
+
+RUNNING
+=======
+Have a webserver running in $(NATIVECOLORS_ROOT)
+http://<server>:<port>/examples/curses_xmas/
+
+BUILDING
+========
+make publish
+- makes nexe for distribution
+
+make devel
+- makes development nexe, you will need to change nmf file
+
+make devel-debug
+- makes development debug nexe, you will need to change nmf file
+
+make gcc
+- makes special local only test copy of xmas.c. pdcurses/ecma-48 TESTING ONLY.
+
+make all
+- makes all variations of nexes 
+
