@@ -3,4 +3,6 @@ Native Colors SDK
 
 Focused on making standard interfaces work on Native Client (NaCl) to make porting other stuff easier.
 
+export NATIVECOLORS_ROOT to this directory in your shell.
+
 #todo write more stuff here
