@@ -1,5 +1,31 @@
 Unreleased tip-of-trunk changes:
 
+* None.
+
+0.8.0.5, 2012-05-11, rginda@chromium.org
+
+* Fix double invocation of initialization code.  This also fixed the reload
+  loop when connecting via a relay.
+* Minor faq and jsdoc cleanup.
+
+0.8.0.4, 2012-05-11, rginda@chromium.org
+
+* Add hterm.NaSSH..removeFile().
+
+0.8.0.3, 2012-05-10, rginda@chromium.org
+
+* Fix "parseState_" typo in 'ESC %' handler.
+
+0.8.0.2, 2012-05-10, rginda@chromium.org
+
+* Remove trailing comma from messages.json.
+* Ensure that /.ssh directory exists before starting.
+* Update FAQ to point out that keys don't work on 0.7.9.
+* Change manifest-dev.json and package.sh script to move dev version from
+  internal home directory to public web store.
+
+0.8.0.1, 2012-05-10, rginda@chromium.org
+
 * Add 'enable-8-bit-control' preference to enable eight bit control sequences.
   This is off by default (which matches xterm) in order to avoid accidental
   usage of some sequences that require termination.  If you encounter one of
@@ -16,11 +42,30 @@ Unreleased tip-of-trunk changes:
 * Resize the terminal after the character measurements change rather than
   re-measure the character during a resize.  The latter causes the terminal
   to get the row, column count wrong based on event ordering.
+* Fix text wrapping to not wrap text pushed to the right in insert mode. Only
+  wrap newly-printed text.
+* Fix default tab-stop handling to not restore on resize after TBC. Also fix
+  some cases where tab-stops would be dropped.
+* Fix ED to erase to the start and end of the screen, independent of scroll
+  area.
+* Fix a number of issues in color handling. In particular, treat toggling bold
+  and inverse independently from setting color indices.
+* Fix to ECH to not shift text to the right of the cursor.
+* Fix to argument parsing to always treat zero as a default value.
+* Remove extra '/' from google_relay.js proxy request.
+* Fix alt-sends-what/alt-is-meta pref change handlers.
+* Don't re-display connection dialog after a relay redirect.
+* Add showFileImporter hack.  This makes it possible to import files from the
+  device filesystem into the Secure Shell filesystem.  This makes it "easy"
+  to get keypairs and ssh configs into Secure Shell.
+* Stop assuming an unspecified port means port 22, since the config file may
+  have a different default set.
 
 Internal bug:
 6375936 hterm hangs when \x90, \x9D, or \x9E is printed
 
-BUG=chromium-os:30142
+BUG=chromium-os:30142,chromium-os:30303,chromium-os:30305,chromium-os:30345
+BUG=chromium-os:30105,chromium-os:29955,chromium-os:25563
 
 0.7.9.3, 2012-04-20, rginda@chromium.org
 

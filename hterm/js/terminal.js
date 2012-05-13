@@ -59,6 +59,10 @@ hterm.Terminal = function(opt_profileName) {
   // Saved tab stops.
   this.tabStops_ = [];
 
+  // Keep track of whether default tab stops have been erased; after a TBC
+  // clears all tab stops, defaults aren't restored on resize until a reset.
+  this.defaultTabStops = true;
+
   // The VT's notion of the top and bottom rows.  Used during some VT
   // cursor positioning and scrolling commands.
   this.vtScrollTop_ = null;
@@ -138,7 +142,7 @@ hterm.Terminal.prototype.setProfile = function(profileName) {
      * Set whether the alt key acts as a meta key or as a distinct alt key.
      */
     ['alt-is-meta', false, function(v) {
-        self.vt.keyboard.altIsMeta = v;
+        self.keyboard.altIsMeta = v;
       }
     ],
 
@@ -155,7 +159,7 @@ hterm.Terminal.prototype.setProfile = function(profileName) {
         if (!/^(escape|8-bit|browser-key)$/.test(v))
           v = 'escape';
 
-        self.vt.keyboard.altSendsWhat = v;
+        self.keyboard.altSendsWhat = v;
       }
     ],
 
@@ -241,10 +245,11 @@ hterm.Terminal.prototype.setProfile = function(profileName) {
      * Default font family for the terminal text.
      */
     ['font-family', ('"DejaVu Sans Mono", "Everson Mono", ' +
-                     'FreeMono, "Menlo", "Consolas", "Courier New", "Terminal", ' +
+                     'FreeMono, "Menlo", "Lucida Console", ' +
                      'monospace'),
      function(v) { self.syncFontFamily() }
     ],
+
     /**
      * The default font size in pixels.
      */
@@ -572,10 +577,11 @@ hterm.Terminal.prototype.realizeWidth_ = function(columnCount) {
   this.screen_.setColumnCount(columnCount);
 
   if (deltaColumns > 0) {
-    this.setDefaultTabStops(this.screenSize.width - deltaColumns);
+    if (this.defaultTabStops)
+      this.setDefaultTabStops(this.screenSize.width - deltaColumns);
   } else {
     for (var i = this.tabStops_.length - 1; i >= 0; i--) {
-      if (this.tabStops_[i] <= columnCount)
+      if (this.tabStops_[i] < columnCount)
         break;
 
       this.tabStops_.pop();
@@ -731,7 +737,10 @@ hterm.Terminal.prototype.forwardTabStop = function() {
     }
   }
 
+  // xterm does not clear the overflow flag on HT or CHT.
+  var overflow = this.screen_.cursorPosition.overflow;
   this.setCursorColumn(this.screenSize.width - 1);
+  this.screen_.cursorPosition.overflow = overflow;
 };
 
 /**
@@ -790,13 +799,15 @@ hterm.Terminal.prototype.clearTabStopAtCursor = function() {
  */
 hterm.Terminal.prototype.clearAllTabStops = function() {
   this.tabStops_.length = 0;
+  this.defaultTabStops = false;
 };
 
 /**
  * Set up the default tab stops, starting from a given column.
  *
  * This sets a tabstop every (column % this.tabWidth) column, starting
- * from the specified column, or 0 if no column is provided.
+ * from the specified column, or 0 if no column is provided.  It also flags
+ * future resizes to set them up.
  *
  * This does not clear the existing tab stops first, use clearAllTabStops
  * for that.
@@ -807,10 +818,13 @@ hterm.Terminal.prototype.clearAllTabStops = function() {
 hterm.Terminal.prototype.setDefaultTabStops = function(opt_start) {
   var start = opt_start || 0;
   var w = this.tabWidth;
-  var stopCount = Math.floor((this.screenSize.width - start) / this.tabWidth)
-  for (var i = 0; i < stopCount; i++) {
-    this.setTabStop(Math.floor((start + i * w) / w) * w + w);
+  // Round start up to a default tab stop.
+  start = start - 1 - ((start - 1) % w) + w;
+  for (var i = start; i < this.screenSize.width; i += w) {
+    this.setTabStop(i);
   }
+
+  this.defaultTabStops = true;
 };
 
 /**
@@ -1228,8 +1242,7 @@ hterm.Terminal.prototype.eraseToLeft = function() {
 };
 
 /**
- * Erase a given number of characters to the right of the cursor, shifting
- * remaining characters to the left.
+ * Erase a given number of characters to the right of the cursor.
  *
  * The cursor position is unchanged.
  *
@@ -1238,13 +1251,20 @@ hterm.Terminal.prototype.eraseToLeft = function() {
  *
  * TODO(rginda): This likely has text-attribute related troubles similar to the
  * todo on hterm.Screen.prototype.clearCursorRow.
+ *
+ * TODO(davidben): Probably better to not add the whitespace to the clipboard
+ * if erasing to the end of the drawn portion of the line. That said, xterm
+ * behaves the same here.
  */
 hterm.Terminal.prototype.eraseToRight = function(opt_count) {
   var cursor = this.saveCursor();
 
   var maxCount = this.screenSize.width - cursor.column;
-  var count = (opt_count && opt_count < maxCount) ? opt_count : maxCount;
-  this.screen_.deleteChars(count);
+  if (opt_count === undefined || opt_count >= maxCount) {
+    this.screen_.deleteChars(maxCount);
+  } else {
+    this.screen_.overwriteString(hterm.getWhitespace(opt_count));
+  }
   this.restoreCursor(cursor);
 };
 
@@ -1263,8 +1283,8 @@ hterm.Terminal.prototype.eraseLine = function() {
 };
 
 /**
- * Erase all characters from the start of the scroll region to the current
- * cursor position.
+ * Erase all characters from the start of the screen to the current cursor
+ * position, regardless of scroll region.
  *
  * The cursor position is unchanged.
  *
@@ -1276,8 +1296,7 @@ hterm.Terminal.prototype.eraseAbove = function() {
 
   this.eraseToLeft();
 
-  var top = this.getVTScrollTop();
-  for (var i = top; i < cursor.row; i++) {
+  for (var i = 0; i < cursor.row; i++) {
     this.setAbsoluteCursorPosition(i, 0);
     this.screen_.clearCursorRow();
   }
@@ -1287,7 +1306,7 @@ hterm.Terminal.prototype.eraseAbove = function() {
 
 /**
  * Erase all characters from the current cursor position to the end of the
- * scroll region.
+ * screen, regardless of scroll region.
  *
  * The cursor position is unchanged.
  *
@@ -1299,7 +1318,7 @@ hterm.Terminal.prototype.eraseBelow = function() {
 
   this.eraseToRight();
 
-  var bottom = this.getVTScrollBottom();
+  var bottom = this.screenSize.height - 1;
   for (var i = cursor.row + 1; i <= bottom; i++) {
     this.setAbsoluteCursorPosition(i, 0);
     this.screen_.clearCursorRow();

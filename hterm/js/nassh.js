@@ -132,7 +132,9 @@ hterm.NaSSH.prototype.initFileSystem_ = function(onComplete) {
 
   function onFileSystem(fileSystem) {
     self.fileSystem_ = fileSystem;
-    onComplete();
+    hterm.getOrCreateDirectory(fileSystem.root, '/.ssh',
+                               onComplete,
+                               hterm.flog('Error creating /.ssh', onComplete));
   }
 
   var requestFS = window.requestFileSystem || window.webkitRequestFileSystem;
@@ -224,6 +226,8 @@ hterm.NaSSH.prototype.reportUnexpectedError_ = function(err) {
  * Initiate a connection to a remote host given a destination string.
  *
  * @param {string} destination A string of the form username@host[:port].
+ * @return {boolean} True if we were able to parse the destination string,
+ *     false otherwise.
  */
 hterm.NaSSH.prototype.connectToDestination = function(destination) {
   if (destination == 'crosh') {
@@ -238,10 +242,14 @@ hterm.NaSSH.prototype.connectToDestination = function(destination) {
   if (ary[4]) {
     this.relay_ = new hterm.NaSSH.GoogleRelay(this.io, ary[4]);
     this.io.println(hterm.msg('INITIALIZING_RELAY', [ary[4]]));
-    if (!this.relay_.init(ary[1], ary[2], (ary[3] || 22))) {
+    if (!this.relay_.init(ary[1], ary[2], ary[3])) {
       // A false return value means we have to redirect to complete
       // initialization.  Bail out of the connect for now.  We'll resume it
       // when the relay is done with its redirect.
+
+      // If we're going to have to redirect for the relay then we should make
+      // sure not to re-prompt for the destination when we return.
+      sessionStorage.removeItem('nassh.promptOnReload');
       return true;
     }
   }
@@ -251,25 +259,133 @@ hterm.NaSSH.prototype.connectToDestination = function(destination) {
 };
 
 /**
+ * Removes a file from the HTML5 filesystem.
+ *
+ * Most likely you want to remove something from the /.ssh/ directory.
+ *
+ * @param {string} fullPath The full path to the file to remove.
+ */
+hterm.NaSSH.prototype.removeFile = function(fullPath) {
+  this.fileSystem_.root.getFile(
+      fullPath, {},
+      function (f) {
+        f.remove(hterm.flog('Removed: ' + fullPath),
+                 hterm.ferr('Error removing' + fullPath));
+      },
+      hterm.flog('Error finding: ' + fullPath)
+  );
+};
+
+/**
+ * Import File objects into the HTML5 filesystem.
+ *
+ * @param {string} dest The target directory for the import.
+ * @param {FileList} fileList A FileList object containing one or more File
+ *     objects to import.
+ */
+hterm.NaSSH.prototype.importFiles = function(dest, fileList) {
+  console.log('Importing ' + fileList.length + ' file(s).');
+
+  if (dest.substr(dest.length - 1) != '/')
+    dest += '/';
+
+  for (var i = 0; i < fileList.length; ++i) {
+    var file = fileList[i];
+    var targetPath = dest + file.name;
+    hterm.overwriteFile(this.fileSystem_.root, targetPath, file,
+                        hterm.flog('Imported: '+ targetPath),
+                        hterm.flog('Error importing: ' + targetPath));
+  }
+};
+
+/**
+ * Show a little bit of UI to allow users to import files into /.ssh.
+ */
+hterm.NaSSH.prototype.showFileImporter = function() {
+  var self = this;
+  var div, input;
+
+  function onFilesCancelled(e) {
+    e.stopPropagation();
+    e.preventDefault();
+    div.parentElement.removeChild(div);
+  }
+
+  function onFilesSelected(e) {
+    e.stopPropagation();
+    e.preventDefault();
+
+    if (input.files.length)
+      self.importFiles('/.ssh/', input.files);
+
+    div.parentElement.removeChild(div);
+  }
+
+  if (document.querySelector('div[import-picker]')) {
+    console.error('Importer already visible.');
+    return;
+  }
+
+  div = document.createElement('div');
+  div.setAttribute('import-picker', true);
+  div.style.cssText =
+    ('position: absolute;' +
+     'z-index: 999;' +
+     'bottom: 0;' +
+     'padding: 0.25em;' +
+     'border: 0.25em black solid;' +
+     'background-color: rgba(255, 255, 255, 0.8);');
+
+  input = document.createElement('input');
+  input.setAttribute('type', 'file');
+  input.setAttribute('multiple', 'multiple');
+  input.addEventListener('change', onFilesSelected);
+  div.appendChild(input);
+
+  // Use an anchor tag so we get pointing-hand cursor on hover.
+  var cancel = document.createElement('a');
+  // But we don't get that unless we have an href, and CSP warns if we try the
+  // old 'javascript://cancel' trick.  Instead we make up a bogus URI scheme
+  // so the hover tooltip isn't too big, and cancel the event from onClick.
+  cancel.setAttribute('href', 'go:cancel');
+  // Unicode CROSS PRODUCT character makes a good close icon.
+  cancel.textContent = '\u2a2f';
+  cancel.addEventListener('click', onFilesCancelled);
+  cancel.style.cssText =
+    ('color: black;' +
+     'text-decoration: none !important;');
+  div.appendChild(cancel);
+
+  document.body.appendChild(div);
+};
+
+
+/**
  * Initiate a connection to a remote host.
  *
  * @param {string} username The username to provide.
  * @param {string} hostname The hostname or IP address to connect to.
  * @param {string|integer} opt_port The optional port number to connect to.
- *     Defaults to 22 if not provided.
  */
 hterm.NaSSH.prototype.connectTo = function(username, hostname, opt_port) {
-  var port = opt_port ? Number(opt_port) : 22;
-  var proxySuffix = ''
+  var hash = username + '@' + hostname;
+
+  var port = opt_port ? Number(opt_port) : '';
+  if (port)
+    hash +=  + ':' + port
 
   if (this.relay_) {
-    proxySuffix = '@' + this.relay_.proxy;
+    hash += '@' + this.relay_.proxy;
     this.io.println(hterm.msg('FOUND_RELAY', this.relay_.relayServer));
   }
 
-  document.location.hash = username + '@' + hostname + ':' + port + proxySuffix;
+  document.location.hash = hash;
 
-  this.io.println(hterm.msg('CONNECTING', [username + '@' + hostname, port]));
+  // TODO(rginda): The "port" parameter was removed from the CONNECTING message
+  // on May 9, 2012, however the translations haven't caught up yet.  We should
+  // remove the port parameter here once they do.
+  this.io.println(hterm.msg('CONNECTING', [username + '@' + hostname,
+                                           (port || '??')]));
   this.io.onVTKeystroke = this.sendString_.bind(this);
   this.io.sendString = this.sendString_.bind(this);
   this.io.onTerminalResize = this.onTerminalResize_.bind(this);
@@ -277,7 +393,8 @@ hterm.NaSSH.prototype.connectTo = function(username, hostname, opt_port) {
   var argv = {};
   argv.username = username;
   argv.host = hostname;
-  argv.port = port;
+  if (port)
+    argv.port = port;
   argv.terminalWidth = this.io.terminal_.screenSize.width;
   argv.terminalHeight = this.io.terminal_.screenSize.height;
   argv.useJsSocket = !!this.relay_;
