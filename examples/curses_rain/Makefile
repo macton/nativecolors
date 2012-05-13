@@ -1,0 +1,36 @@
+# --------------------------------------------------------------------
+# Project sources
+# --------------------------------------------------------------------
+
+PROJECT  := rain
+DEPS     := 
+SOURCES  := rain.c
+
+export PROJECT
+export SOURCES
+export DEPS
+
+all: publish devel devel-debug
+
+publish:
+	make -f MakeNexe.mak x86_32 
+	make -f MakeNexe.mak x86_64 
+
+devel:
+	make -f MakeNexe.mak x86_32 devel
+	make -f MakeNexe.mak x86_64 devel
+
+devel-debug:
+	make -f MakeNexe.mak x86_32 devel debug
+	make -f MakeNexe.mak x86_64 devel debug
+
+gcc:
+	make -f MakeNexe.mak gcc
+	make -f MakeNexe.mak gcc
+
+.PHONY: clean
+clean:
+	rm -f *.o
+	rm -f *.nexe
+	rm -f rain-gcc
+
