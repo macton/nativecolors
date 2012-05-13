@@ -26,6 +26,16 @@ LIMITATIONS
 - No cut and paste support
 - No terminal resize support
 
+SETTINGS
+============================================================================
+
+Some things can be selectively disabled to make porting easier:
+
+-DNO_IOCTL
+  Removes calls to ioctl and references to <sys/ioctl.h>
+  Requires -DFIXED_WIDTH=<width> is set
+  Requires -DFIXED_HEIGHT=<height> is set
+
 
 REQUIREMENTS 
 ============================================================================
