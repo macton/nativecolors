@@ -26,7 +26,15 @@ Loosely based on fhs http://www.pathname.com/fhs/pub/fhs-2.3.html
 /usr/ports
 - Build scripts and any additional patches required to build packages for the nativecolors environment
   or native client in general.
-- Ports may provide either host or client libraries/nexes or both.
+
+/usr/ports/libraries
+- Libraries intended that may be used for either host or client applications
+
+/usr/ports/host
+- Applications intended to be run on the host. Installed to /usr/bin/
+
+/usr/ports/client
+- Applications intended to be run on the client. Installed to /srv/www/
 
 /usr/bin
 - Pre-build binaries (nexe) which can be used on in the nativecolors environment on any host.
@@ -46,6 +54,6 @@ Loosely based on fhs http://www.pathname.com/fhs/pub/fhs-2.3.html
 /srv/www
 - Files expected to be served from an http server. This directory is assumed to be the root of that
   server.
-- Projects from /usr/ports and /usr/src may be pre-installed in this directory.
+- Projects from /usr/ports/client and /usr/src may be pre-installed in this directory.
 
 
