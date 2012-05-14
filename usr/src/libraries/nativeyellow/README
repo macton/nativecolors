@@ -1,0 +1,19 @@
+NATIVE YELLOW
+-------------
+
+libnativeyellow is a C library designed as a simple wrapper for headless NaCl applications 
+running on the host
+
+- define pthread_rwlock
+- define ioctl TIOCGWINSZ
+- define int strnurlencode( char* dest, int dest_max_len, const char* str, size_t str_max_len );
+- define int strnurldecode( char* dest, int dest_max_len, const char* str, size_t str_max_len );
+- define uint32_t next_pow2_u32(uint32_t x);
+- define uint64_t next_pow2_u64(uint64_t x);
+- declare int fileno( FILE* stream );
+- define ssize_t writev(int d, const struct iovec *iov, int iovcnt)
+
+DEPENDENCIES
+------------
+
+- none
