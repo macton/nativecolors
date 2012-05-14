@@ -8,8 +8,11 @@ WARNINGS    := -Wno-long-long -Wall -pedantic
 ARFLAGS     := rcs
 OSNAME      := $(shell python $(NACL_SDK_ROOT)/tools/getos.py)
 LDFLAGS     :=
+
 CFLAGS      += -I$(NATIVECOLORS_ROOT)/usr/include
 CFLAGS      += -D_GNU_SOURCE
+NATIVEYELLOW  := nativeyellow
+CURSES      := curses
 
 # --------------------------------------------------------------------
 # glibc (newlib if not specified)
@@ -19,11 +22,15 @@ ifeq (glibc,$(filter glibc,$(MAKECMDGOALS)))
 PROJECT     := $(PROJECT)-glibc
 OBJEXT      := glibc
 LIBCNAME    := glibc
+NATIVEYELLOW  := $(NATIVEYELLOW)-glibc
+CURSES      := $(CURSES)-glibc
 else
 ifneq (gcc,$(filter gcc,$(MAKECMDGOALS)))
 PROJECT     := $(PROJECT)-newlib
 OBJEXT      := newlib
 LIBCNAME    := newlib
+NATIVEYELLOW  := $(NATIVEYELLOW)-newlib
+CURSES      := $(CURSES)-newlib
 endif
 endif
 
@@ -36,6 +43,8 @@ ifeq (x86_32,$(filter x86_32,$(MAKECMDGOALS)))
 PROJECT     := $(PROJECT)-x86-32
 OBJEXT      := $(OBJEXT)-x86-32
 CFLAGS      += -m32
+NATIVEYELLOW  := $(NATIVEYELLOW)-x86-32
+CURSES      := $(CURSES)-x86-32
 endif
 
 # --------------------------------------------------------------------
@@ -47,6 +56,8 @@ ifeq (x86_64,$(filter x86_64,$(MAKECMDGOALS)))
 PROJECT     := $(PROJECT)-x86-64
 OBJEXT      := $(OBJEXT)-x86-64
 CFLAGS      += -m64
+NATIVEYELLOW  := $(NATIVEYELLOW)-x86-64
+CURSES      := $(CURSES)-x86-64
 endif
 
 # --------------------------------------------------------------------
@@ -57,6 +68,7 @@ endif
 ifeq (gcc,$(filter gcc,$(MAKECMDGOALS)))
 PROJECT  := $(PROJECT)-gcc
 OBJEXT   := gcc
+CURSES   := $(CURSES)-gcc
 endif
 
 # --------------------------------------------------------------------
@@ -68,6 +80,8 @@ ifeq (devel,$(filter devel,$(MAKECMDGOALS)))
 CFLAGS      += -DDEVEL
 OBJEXT      := $(OBJEXT)-devel
 PROJECT     := $(PROJECT)-devel
+NATIVEYELLOW  := $(NATIVEYELLOW)-devel
+CURSES      := $(CURSES)-devel
 endif
 
 # --------------------------------------------------------------------
@@ -78,6 +92,8 @@ ifeq (debug,$(filter debug,$(MAKECMDGOALS)))
 CFLAGS      += -O0 -g
 OBJEXT      := $(OBJEXT)-debug
 PROJECT     := $(PROJECT)-debug
+NATIVEYELLOW  := $(NATIVEYELLOW)-debug
+CURSES      := $(CURSES)-debug
 else
 CFLAGS   += -O2
 endif
@@ -126,6 +142,13 @@ glibc:
 # --------------------------------------------------------------------
 # Common (create lib)
 # --------------------------------------------------------------------
+
+ifneq (gcc,$(filter gcc,$(MAKECMDGOALS)))
+# Seems to be randomly picky about lib include order. 
+LDFLAGS  += -L$(NATIVECOLORS_ROOT)/usr/lib
+LDFLAGS  += -l$(CURSES)
+LDFLAGS  += -l$(NATIVEYELLOW)
+endif
 
 MAINOBJ  := $(patsubst %.c, %.$(OBJEXT).o, $(MAIN))
 OBJS     := $(patsubst %.c, %.$(OBJEXT).o, $(SOURCES))

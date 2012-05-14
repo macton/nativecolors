@@ -4,7 +4,7 @@
 
 PROJECT  := echo
 DEPS     := 
-SOURCES  := $(NATIVECOLORS_ROOT)/usr/packages/echo/echo.c writev.c
+SOURCES  := $(NATIVECOLORS_ROOT)/usr/packages/echo/echo.c 
 
 export PROJECT
 export SOURCES
