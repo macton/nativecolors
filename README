@@ -6,3 +6,46 @@ Focused on making standard interfaces work on Native Client (NaCl) to make porti
 export NATIVECOLORS_ROOT to this directory in your shell.
 
 #todo write more stuff here
+
+DIRECTORY STRUCTURE
+-------------------
+Loosely based on fhs http://www.pathname.com/fhs/pub/fhs-2.3.html
+
+/usr
+
+/usr/src
+- Source specific to this environment 
+
+/usr/src/examples
+- Very small examples to get you started creating new nativecolors or general native client projects
+
+/usr/packages
+- Read-only hosted external source packages.
+- Do not change from original source. Any necessary patches should be applied in /usr/ports.
+
+/usr/ports
+- Build scripts and any additional patches required to build packages for the nativecolors environment
+  or native client in general.
+- Ports may provide either host or client libraries/nexes or both.
+
+/usr/bin
+- Pre-build binaries (nexe) which can be used on in the nativecolors environment on any host.
+
+/usr/include
+- Include files from ports and /src projects used to compile projects.
+
+/usr/lib
+- Pre-built libraries from from ports and /src projects used to build projects.
+
+/usr/archive
+- Random stuff saved for reference
+
+/srv
+- Files expected to be served from a server running on the environment hosting these files
+
+/srv/www
+- Files expected to be served from an http server. This directory is assumed to be the root of that
+  server.
+- Projects from /usr/ports and /usr/src may be pre-installed in this directory.
+
+

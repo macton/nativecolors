@@ -1,0 +1,75 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+  <head>
+    <META HTTP-EQUIV="Pragma" CONTENT="no-cache" />
+    <META HTTP-EQUIV="Expires" CONTENT="-1" />
+    <title>Native Black Hello</title>
+  </head>
+  <style type="text/css">
+    html, body {
+	margin-left: 20px;
+	margin-top: 0px;
+	margin-right: 0px;
+	margin-bottom: 0px;
+	background-color: 444;
+  }
+  </style>
+  <body style="height:100%">
+
+    <h1>Native Black Hello</h1>
+    <div id="load-status">Module loading...</div>
+    <div id="instance-status"></div>
+    <div id="focus-status"></div>
+    <div id="view-status"></div>
+    <div id="output"></div>
+
+
+    <div id="listener">
+      <embed type="application/x-nacl" id="hello_nexe" name="nacl_module" src="hello.nmf" style="width:0px;height:0px" />
+  
+      <script type="text/javascript">
+        var load_status     = document.getElementById('load-status');
+        var instance_status = document.getElementById('instance-status');
+        var focus_status    = document.getElementById('focus-status');
+        var view_status     = document.getElementById('view-status');
+        var listener        = document.getElementById('listener');
+        var output          = document.getElementById('output');
+        var focus_count     = 0;
+        var view_count      = 0;
+  
+        function module_ready() {
+          load_status.innerHTML = "Module loading COMPLETE.";
+        }
+  
+        function instance_message( message ) {
+          if ( message.data == "Instance_DidCreate" ) {
+            instance_status.innerHTML = "Instance Created.";
+            focus_status.innerHTML    = "Instance FocusChange (click) count: " + focus_count;
+            view_status.innerHTML     = "Instance ViewChange count: "  + view_count;
+          } else if ( message.data == "Instance_DidChangeFocus" ) {
+            focus_count++;
+            focus_status.innerHTML    = "Instance FocusChange (click) count: " + focus_count;
+          } else if ( message.data == "Instance_DidChangeView" ) {
+            view_count++;
+            view_status.innerHTML     = "Instance ViewChange count: "  + view_count;
+          } else {
+            log( message.data );
+          }
+        }
+        
+        function log( message ) {
+          if (output.innerHTML.length == 0) {
+            output.innerHTML = message;
+          } else {
+            output.innerHTML = output.innerHTML + '<br />' + message;
+          }
+        }
+  
+        listener.addEventListener( 'load',    module_ready,     true );
+        listener.addEventListener( 'message', instance_message, true );
+      </script>
+    </div>
+
+  </body>
+</html>
