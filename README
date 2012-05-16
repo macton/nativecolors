@@ -16,8 +16,17 @@ Loosely based on fhs http://www.pathname.com/fhs/pub/fhs-2.3.html
 /usr/src
 - Source specific to this environment 
 
-/usr/src/examples
+/usr/src/client
+- Applications intended to run on the client. Installed to /srv/www
+
+/usr/src/client/examples
 - Very small examples to get you started creating new nativecolors or general native client projects
+
+/usr/src/host
+- Applications intended to run on the host. Installed to /usr/bin
+
+/usr/src/libraries
+- Libraries intended that may be used for either host or client applications
 
 /usr/packages
 - Read-only hosted external source packages.
@@ -57,3 +66,42 @@ Loosely based on fhs http://www.pathname.com/fhs/pub/fhs-2.3.html
 - Projects from /usr/ports/client and /usr/src may be pre-installed in this directory.
 
 
+TODO
+----
+Some stuff I want to do in no particular order:
+- gcc.nexe
+- ddlt.nexe
+- Use Tundra build system
+- native-host server to provide file i/o via dropbox API. Use liboauth.
+- native-host server to provide socket proxy for client builds. Use libwebsockets.
+- kb support for curses+nativeblue+hterm
+- kb support for curses+nativeyellow
+- Build some stuff from nacl_ports
+-- bzip2-1.0.6
+-- expat-2.0.1
+-- ffmpeg-0.5
+-- fftw-3.2.2
+-- fontconfig-2.7.3
+-- FreeImage-3.14.1
+-- freetype-2.1.10
+-- ImageMagick-6.5.4-10
+-- jpeg-6b
+-- jsoncpp-0.5.0
+-- libpng-1.2.40
+-- libtomcrypt-1.17
+-- libtommath-0.41
+-- lua-5.1.4
+-- openssl-1.0.0e
+-- tiff-3.9.1
+-- tinyxml
+-- x264-snapshot-20091023-2245
+-- zlib-1.2.3
+- Separate lib/bin directories per target and configuration type
+- Include necessary native-host stuff from nacl_sdk
+- Note on naming. e.g. see: http://gcc.gnu.org/onlinedocs/gccint/Configure-Terms.html
+- Shells: tcsh? sh? bash? ssh? screen?
+- vim.nexe
+- Selectively redirect stdout to another host over socket
+-- Select new driver for /dev/stdout?
+- Auto-map function calls from javascript environment to nativeblue
+- POSIX IPC http://docs.oracle.com/cd/E19455-01/806-4750/6jdqdfltf/index.html

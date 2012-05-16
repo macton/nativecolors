@@ -63,11 +63,12 @@ hterm.replaceVars = function(str, vars) {
  * @param {Array} opt_args The message arguments, if required.
  */
 hterm.msg = function(name, opt_args) {
-  var rv = chrome.i18n.getMessage(name, opt_args);
-  if (!rv)
-    console.log('Missing message: ' + name);
 
-  return rv;
+  // var rv = chrome.i18n.getMessage(name, opt_args);
+  // if (!rv)
+  //  console.log('Missing message: ' + name);
+  // return rv;
+  return name;
 };
 
 /**

@@ -30,10 +30,14 @@ int ioctl(int d, unsigned long request, ...)
         struct winsize* size = va_arg(argp, struct winsize*);    
   
         // Hack in a size for the moment...
-        size->ws_col    = atoi( getenv("COLUMNS") );
-        size->ws_row    = atoi( getenv("LINES") );
+        const char* columns = getenv("COLUMNS");
+        const char* lines   = getenv("LINES");
+ 
+        size->ws_col    = (columns)?atoi(columns):0;
+        size->ws_row    = (lines)?atoi(lines):0;
         size->ws_xpixel = 0;
         size->ws_ypixel = 0;
+
         exit_code = 0;
       }
     }
