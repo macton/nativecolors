@@ -4,7 +4,7 @@
 
 PROJECT  := libnativeyellow
 DEPS     := nativeyellow.h pthread_rwlock.h
-SOURCES  := nativeyellow.c pthread_rwlock.c writev.c
+SOURCES  := nativeyellow.c pthread_rwlock.c writev.c chmod.c unlink.c lstat.c
 
 export PROJECT
 export SOURCES

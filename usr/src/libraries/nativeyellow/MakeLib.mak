@@ -3,7 +3,8 @@
 # Project config
 # --------------------------------------------------------------------
 
-WARNINGS := -Wno-long-long -Wall -pedantic
+# WARNINGS := -Wno-long-long -Wall -pedantic
+WARNINGS := -Wno-long-long -Wall
 CFLAGS   := -std=c99 $(WARNINGS)
 ARFLAGS  := rcs
 OSNAME   := $(shell python $(NACL_SDK_ROOT)/tools/getos.py)
