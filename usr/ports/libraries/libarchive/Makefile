@@ -9,13 +9,16 @@ DEPS     := config.h
 # $(NATIVECOLORS_ROOT)/usr/packages/libarchive/libarchive/archive_read_support_format_mtree.c
 # $(NATIVECOLORS_ROOT)/usr/packages/libarchive/libarchive/archive_write_set_format_mtree.c
 
-        # $(NATIVECOLORS_ROOT)/usr/packages/libarchive/libarchive/archive_read_disk_entry_from_file.c 
-        # $(NATIVECOLORS_ROOT)/usr/packages/libarchive/libarchive/archive_read_disk_set_standard_lookup.c
-        # $(NATIVECOLORS_ROOT)/usr/packages/libarchive/libarchive/archive_write_disk_acl.c
-        # $(NATIVECOLORS_ROOT)/usr/packages/libarchive/libarchive/archive_write_disk_set_standard_lookup.c
-        # $(NATIVECOLORS_ROOT)/usr/packages/libarchive/libarchive/archive_write_set_format_iso9660.c
+# requires more sophisticated disk access than we have in either nativeyellow (host) or nativeblue (client)
+# $(NATIVECOLORS_ROOT)/usr/packages/libarchive/libarchive/archive_read_disk_entry_from_file.c 
+# $(NATIVECOLORS_ROOT)/usr/packages/libarchive/libarchive/archive_read_disk_set_standard_lookup.c
+# $(NATIVECOLORS_ROOT)/usr/packages/libarchive/libarchive/archive_write_disk_acl.c
+# $(NATIVECOLORS_ROOT)/usr/packages/libarchive/libarchive/archive_write_disk_set_standard_lookup.c
 
-# windows specific
+# can read ISO 9660 but not write.
+# $(NATIVECOLORS_ROOT)/usr/packages/libarchive/libarchive/archive_write_set_format_iso9660.c
+
+# not windows specific
 # $(NATIVECOLORS_ROOT)/usr/packages/libarchive/libarchive/archive_windows.c
 # $(NATIVECOLORS_ROOT)/usr/packages/libarchive/libarchive/archive_read_disk_windows.c
 # $(NATIVECOLORS_ROOT)/usr/packages/libarchive/libarchive/archive_write_disk_windows.c
