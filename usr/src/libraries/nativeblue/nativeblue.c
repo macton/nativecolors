@@ -13,6 +13,13 @@
 #include "nativeblue.h"
 #include "pthread_rwlock.h"
 
+// Q: Why queue up all the PPAPI calls installed of CallOnMainThread?
+//   - See: "CallonMainThread kills performance" https://groups.google.com/d/msg/native-client-discuss/IhdJ-fAre8g/8pOPxzo5_DcJ
+//     "Hi, so CallOnMainThread() invoked off the main thread in its current implementation involves multiple RPCs.  It might be ok to invoke 
+//      a few times per frame at 60hz.  As the OP found, wrapping OpenGL calls (of which there might be thousands or tens of thousands of 
+//      calls per frame) with CallOnMainThread() will have a significant impact on performance.  It wasn't intended to be used this way.  
+//      We're working on ways to make PPAPI & OpenGL usable off the main thread in NaCl, but I can't put a timeline on when that will land."
+
 int    nablue_main(int argc, char **argv);
 void*  main_entry(void *parm);
 int    __wrap_write(int, void *, size_t);
