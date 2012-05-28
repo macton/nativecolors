@@ -18,6 +18,7 @@ static void FileSystemOpen( void* user_data, int32_t result )
 int NaBlueFileSystemStartup(void)
 {
   NaBlueFdStartup();
+  NaBlueSetCwd("/");
 
   s_TempFileSystem       = NaBlackFileSystemCreate( PP_FILESYSTEMTYPE_LOCALTEMPORARY );
   s_LocalFileSystem      = NaBlackFileSystemCreate( PP_FILESYSTEMTYPE_LOCALPERSISTENT );

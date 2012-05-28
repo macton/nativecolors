@@ -4,7 +4,7 @@
 
 PROJECT  := libnativeblue
 DEPS     := nativeblue.h nativeblue_private.h
-SOURCES  := nativeblue.c pthread_rwlock.c writev.c filesys.c sleep.c write.c ioctl.c urlencode.c pow.c fd.c open.c close.c
+SOURCES  := nativeblue.c pthread_rwlock.c writev.c filesys.c sleep.c write.c ioctl.c urlencode.c pow.c fd.c open.c close.c lseek.c cwd.c read.c
 
 export PROJECT
 export SOURCES

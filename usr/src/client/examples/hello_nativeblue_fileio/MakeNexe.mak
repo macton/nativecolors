@@ -10,7 +10,9 @@ OSNAME      := $(shell python $(NACL_SDK_ROOT)/tools/getos.py)
 LDFLAGS     :=
 ifneq (gcc,$(filter gcc,$(MAKECMDGOALS)))
 CFLAGS      += -Xlinker --wrap -Xlinker write
+CFLAGS      += -Xlinker --wrap -Xlinker read
 CFLAGS      += -Xlinker --wrap -Xlinker open
+CFLAGS      += -Xlinker --wrap -Xlinker lseek
 endif
 
 CFLAGS      += -I$(NATIVECOLORS_ROOT)/usr/include
@@ -149,6 +151,19 @@ glibc:
 ifneq (gcc,$(filter gcc,$(MAKECMDGOALS)))
 # Seems to be randomly picky about lib include order. 
 LDFLAGS  += -lppapi
+
+# Make sure these symbols get pulled in from the library
+LDFLAGS  += -Wl,--undefined
+LDFLAGS  += -Wl,__wrap_lseek
+LDFLAGS  += -Wl,--undefined
+LDFLAGS  += -Wl,__wrap_write
+LDFLAGS  += -Wl,--undefined
+LDFLAGS  += -Wl,__wrap_open
+LDFLAGS  += -Wl,--undefined
+LDFLAGS  += -Wl,__wrap_close
+LDFLAGS  += -Wl,--undefined
+LDFLAGS  += -Wl,__wrap_read
+
 LDFLAGS  += -L$(NATIVECOLORS_ROOT)/usr/lib
 LDFLAGS  += -l$(NATIVEBLUE)
 LDFLAGS  += -l$(NATIVEBLACK)
@@ -159,7 +174,22 @@ MAINOBJ  := $(patsubst %.c, %.$(OBJEXT).o, $(MAIN))
 OBJS     := $(patsubst %.c, %.$(OBJEXT).o, $(SOURCES))
 TC_PATH  := $(abspath $(NACL_SDK_ROOT)/toolchain/$(OSNAME)_x86_$(LIBCNAME))
 CC       := $(TC_PATH)/bin/i686-nacl-gcc
-LINK     := $(TC_PATH)/bin/i686-nacl-gcc
+LINK     := $(TC_PATH)/bin/i686-nacl-g++
+STRIP    := $(TC_PATH)/bin/i686-nacl-strip
+OBJCOPY  := $(TC_PATH)/bin/i686-nacl-objcopy
+
+ifeq (gcc,$(filter gcc,$(MAKECMDGOALS)))
+CC      := gcc
+LINK    := gcc
+STRING  := strip
+OBJCOPY := objcopy
+endif
+
+MAINOBJ  := $(patsubst %.c, %.$(OBJEXT).o, $(MAIN))
+OBJS     := $(patsubst %.c, %.$(OBJEXT).o, $(SOURCES))
+TC_PATH  := $(abspath $(NACL_SDK_ROOT)/toolchain/$(OSNAME)_x86_$(LIBCNAME))
+CC       := $(TC_PATH)/bin/i686-nacl-gcc
+LINK     := $(TC_PATH)/bin/i686-nacl-g++
 STRIP    := $(TC_PATH)/bin/i686-nacl-strip
 OBJCOPY  := $(TC_PATH)/bin/i686-nacl-objcopy
 
@@ -172,6 +202,7 @@ endif
 
 $(PROJECT).nexe : $(OBJS)
 	$(LINK) -o $@ $^ $(CFLAGS) $(LDFLAGS)
+	$(STRIP) $(PROJECT).nexe
 
 $(PROJECT) : $(OBJS) 
 	$(LINK) -o $@ $^ $(CFLAGS) $(LDFLAGS)

@@ -4,6 +4,7 @@
 #include "nativeblue_private.h"
 
 static void FileOpenComplete( void* user_data, int32_t result );
+static void FileQueryComplete( void* user_data, int32_t result );
 
 int __wrap_open(const char *path, int oflag, ... )
 {
@@ -16,8 +17,21 @@ int __wrap_open(const char *path, int oflag, ... )
 
   NaBlueFileDescription* file  = NaBlueGetFileDescription( fd );
 
-  strncpy( file->path, path, kNaBlueMaxPath );
-  file->path[ kNaBlueMaxPath ] = 0;
+  if ( path[0] == '/' )
+  {
+    strncpy( file->path, path, kNaBlueMaxPath );
+    file->path[ kNaBlueMaxPath ] = 0;
+  }
+  else
+  {
+    const char* cwd     = NaBlueGetCwd();
+    int         cwd_len = strlen( cwd );
+
+    strncpy( file->path, cwd, kNaBlueMaxPath ); 
+    strncpy( file->path + cwd_len, path, kNaBlueMaxPath - cwd_len );
+    file->path[ kNaBlueMaxPath ] = 0;
+  }
+
   file->flags = 0;
   file->pos   = 0;
   file->fd    = fd;
@@ -128,7 +142,7 @@ int __wrap_open(const char *path, int oflag, ... )
   return ( -1 );
 }
 
-void FileOpenComplete( void* user_data, int32_t result )
+void FileQueryComplete( void* user_data, int32_t result )
 {
   NaBlueFileDescription* file = (NaBlueFileDescription*)user_data;
 
@@ -136,6 +150,32 @@ void FileOpenComplete( void* user_data, int32_t result )
   {
     __sync_synchronize();
     file->state = kNaBlueFileStateReady;
+  }
+  else
+  {
+    file->status = result;
+
+    __sync_synchronize();
+    file->state  = kNaBlueFileStateError;
+  }
+}
+
+void FileOpenComplete( void* user_data, int32_t result )
+{
+  NaBlueFileDescription* file = (NaBlueFileDescription*)user_data;
+
+  if ( result == 0 )
+  {
+    PP_CompletionCallback query_callback = { .func = FileQueryComplete, .user_data = (void*)file, .flags = PP_COMPLETIONCALLBACK_FLAG_NONE };
+    int32_t               query_status   = NaBlackFileIOQuery( file->fileIO, &file->fileInfo, query_callback );
+  
+    if ( query_status != PP_OK_COMPLETIONPENDING )
+    {
+      file->status = query_status;
+  
+      __sync_synchronize();
+      file->state  = kNaBlueFileStateError;
+    }
   }
   else
   {

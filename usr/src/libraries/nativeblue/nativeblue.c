@@ -274,6 +274,10 @@ PP_Bool NaBlackInstanceCreate( uint32_t argc, const char* argn[], const char* ar
     return PP_FALSE;
   }
 
+  // By default stdout and stderr are unbuffered
+  setvbuf( stdout, NULL, _IONBF, 0 );  
+  setvbuf( stderr, NULL, _IONBF, 0 );  
+
   g_MainThreadStatus.m_Status = kMainStatusStarting;
   int main_start_result       = pthread_create(&g_MainThread, NULL, main_entry, NULL);
   if ( main_start_result != 0 )
@@ -393,7 +397,6 @@ void FlushCommands(void)
       {
         NaBlueBrowserWriteCommand* write_command = (NaBlueBrowserWriteCommand*) ( ( (char*)command ) + sizeof( NaBlueCommand ) );
         char*                      write_buffer  = ( (char*) write_command ) + sizeof( NaBlueBrowserWriteCommand );
-
         NaBlueBrowserWrite( write_command->dev, write_buffer, write_command->count );
       }
       break;
@@ -402,8 +405,14 @@ void FlushCommands(void)
       {
         NaBlueWriteCommand* write_command = (NaBlueWriteCommand*) ( ( (char*)command ) + sizeof( NaBlueCommand ) );
         char*               write_buffer  = ( (char*) write_command ) + sizeof( NaBlueWriteCommand );
-
         NaBlueFileWrite( write_command->fd, write_buffer, write_command->count );
+      }
+      break;
+
+      case kNaBlueCommandRead:
+      {
+        NaBlueReadCommand* read_command = (NaBlueReadCommand*) ( ( (char*)command ) + sizeof( NaBlueCommand ) );
+        NaBlueFileRead( read_command->fd, read_command->buf, read_command->count );
       }
       break;
 

@@ -6,6 +6,9 @@ static ssize_t BrowserQueueWrite( const char* dev, void* buf, size_t count );
 static ssize_t LocalQueueWrite( int fd, void* buf, size_t count );
 static void    FileWriteComplete( void* user_data, int32_t result );
 
+// Don't bother locking fd. There's no sensible use of multiple threads using fd without a higher level
+// locking mechanism anyway.
+
 ssize_t __wrap_write(int fd, void* buf, size_t count)
 {
   int            is_stdout       = ( fd == fileno(stdout) );
@@ -62,7 +65,8 @@ ssize_t LocalQueueWrite( int fd, void* buf, size_t count )
 {
   NaBlueFileDescription* file = NaBlueGetFileDescription( fd );
 
-  file->state = kNaBlueFileStateWriting; // Fix the state before before enter command queue
+  file->rw_count = 0;
+  file->state    = kNaBlueFileStateWriting; // Fix the state before before enter command queue
 
   NaBlueCommandWriteLock();
 
@@ -87,7 +91,7 @@ ssize_t LocalQueueWrite( int fd, void* buf, size_t count )
   // Wait for NaBlueFileWriteComplete()
   if ( NaBlueWaitFileReady( fd ) )
   {
-    return (count);  
+    return (file->rw_count);
   }
  
   return ( -1 );
@@ -135,7 +139,13 @@ void FileWriteComplete( void* user_data, int32_t result )
     return; 
   }
 
-  file->pos += result;
+  file->pos      += result;
+  file->rw_count += result;
+
+  if ( file->pos > file->fileInfo.size )
+  {
+    file->fileInfo.size = file->pos;
+  }
 
   if ( file->pos < file->targetPos )
   {

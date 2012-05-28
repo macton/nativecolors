@@ -18,6 +18,7 @@ enum
 
 typedef struct NaBlueCommand             NaBlueCommand;
 typedef struct NaBlueWriteCommand        NaBlueWriteCommand;
+typedef struct NaBlueReadCommand         NaBlueReadCommand;
 typedef struct NaBlueBrowserWriteCommand NaBlueBrowserWriteCommand;
 typedef struct NaBlueOpenCommand         NaBlueOpenCommand;
 typedef struct NaBlueCloseCommand        NaBlueCloseCommand;
@@ -27,6 +28,7 @@ enum
   kNaBlueCommandNull,
   kNaBlueCommandBrowserWrite,
   kNaBlueCommandWrite,
+  kNaBlueCommandRead,
   kNaBlueCommandOpen,
   kNaBlueCommandClose
 };
@@ -47,6 +49,13 @@ struct NaBlueWriteCommand
 {
   int32_t fd;
   size_t  count;
+};
+
+struct NaBlueReadCommand
+{
+  int32_t fd;
+  size_t  count;
+  char*   buf;
 };
 
 struct NaBlueOpenCommand
@@ -75,15 +84,18 @@ typedef struct NaBlueFileDescription NaBlueFileDescription;
 
 struct NaBlueFileDescription
 {
-  PP_Resource fileRef;  
-  PP_Resource fileIO;
-  int32_t     state;
-  int32_t     status;
-  int64_t     pos;
-  int64_t     targetPos;
-  char        path[ kNaBlueMaxPath+1 ];
-  int32_t     flags;
-  int         fd;
+  PP_Resource        fileRef;  
+  PP_Resource        fileIO;
+  PP_FileInfo        fileInfo;
+
+  int64_t            pos;
+  int64_t            targetPos;
+  int64_t            rw_count;
+  int32_t            state;
+  int32_t            status;
+  char               path[ kNaBlueMaxPath+1 ];
+  int32_t            flags;
+  int                fd;
 
   union
   {
@@ -128,5 +140,8 @@ int32_t                NaBlueGetTempFileSystemState( void );
 void                   NaBlueFileOpen( int fd );
 void                   NaBlueBrowserWrite( const char* dev, const char* buffer, size_t size );
 void                   NaBlueFileWrite( int fd, const char* buffer, size_t size );
+void                   NaBlueFileRead( int fd, char* buffer, size_t size );
 void                   NaBlueFileClose( int fd );
+void                   NaBlueSetCwd( const char* path );
+const char*            NaBlueGetCwd( void );
 
