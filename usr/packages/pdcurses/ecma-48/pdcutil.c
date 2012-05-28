@@ -14,7 +14,6 @@
 void PDC_beep(void)
 {
   printf("\a");
-  fflush(stdout);
 }
 
 

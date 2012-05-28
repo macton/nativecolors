@@ -116,5 +116,4 @@ void PDC_transform_line(int lineno, int x, int len, const chtype* srcp)
     out[len] = 0;
 
     printf("\033[%d;%dH%s",lineno,x,out);
-    fflush(stdout);
 }

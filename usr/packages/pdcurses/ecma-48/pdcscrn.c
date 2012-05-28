@@ -301,6 +301,8 @@ int PDC_scr_open(int argc, char **argv)
 
     PDC_reset_prog_mode();
 
+    setvbuf( stdout, NULL, _IONBF, 0 );  
+
     return OK;
 }
 
