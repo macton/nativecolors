@@ -20,26 +20,16 @@
 //           (2) even if they were, the reference implementation is based on the
 //               __sync primitives anyway.
 
-#include <time.h>
-#include "pthread_rwlock.h"
+#include "nativeblue_private.h"
 
 enum
 {
   kRwLockSpinCount = 32,
-  kRwLockSleepMs   = 8 
 };
 
 int pthread_yield( void )
 {
-  // instead of sched_yield() use nanosleep
-  // Reference: libatomic_ops http://www.hpl.hp.com/research/linux/atomic_ops/index.php4
-  // See also: https://groups.google.com/d/topic/native-client-discuss/khBNKzdDZ0w/discussion
-
-  struct timespec ts;
-  ts.tv_sec  = 0;
-  ts.tv_nsec = 1000000 * kRwLockSleepMs;
-  nanosleep(&ts, 0);
-
+  NaBlueSleepLong();
   return (0);
 }
 

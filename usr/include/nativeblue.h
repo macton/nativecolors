@@ -3,6 +3,10 @@
 #include <stdio.h>
 #include <stdint.h>
 
+void NaBlueSleepShort( void );
+void NaBlueSleepLong( void );
+void NaBlueSleep( int64_t ms );
+
 // --------------------------------------------------------------------------
 // int strnurlencode( char* dest, int dest_max_len, const char* str, size_t str_max_len ) 
 // int strnurldecode( char* dest, int dest_max_len, const char* str, size_t str_max_len ) 

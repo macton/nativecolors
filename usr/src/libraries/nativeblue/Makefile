@@ -3,8 +3,8 @@
 # --------------------------------------------------------------------
 
 PROJECT  := libnativeblue
-DEPS     := nativeblue.h pthread_rwlock.h
-SOURCES  := nativeblue.c pthread_rwlock.c writev.c
+DEPS     := nativeblue.h nativeblue_private.h
+SOURCES  := nativeblue.c pthread_rwlock.c writev.c filesys.c sleep.c write.c ioctl.c urlencode.c pow.c fd.c open.c close.c
 
 export PROJECT
 export SOURCES
@@ -37,4 +37,4 @@ install:
 	@mkdir -p $(NATIVECOLORS_ROOT)/srv/www/nativeblue
 	cp nativeblueterm.js $(NATIVECOLORS_ROOT)/srv/www/nativeblue
 	cp *.a $(NATIVECOLORS_ROOT)/usr/lib/
-	cp *.h $(NATIVECOLORS_ROOT)/usr/include/
+	cp nativeblue.h $(NATIVECOLORS_ROOT)/usr/include/

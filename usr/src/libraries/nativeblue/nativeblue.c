@@ -1,17 +1,11 @@
 #include <string.h>
 #include <stdio.h>
-#include <errno.h>
 #include <alloca.h>
 #include <ctype.h>
-#include <stdarg.h>
 #include <nativeblack.h>
 
-#define _MULTI_THREADED
-#include <pthread.h>
+#include "nativeblue_private.h"
 
-#include <sys/ioctl.h>
-#include "nativeblue.h"
-#include "pthread_rwlock.h"
 
 // Q: Why queue up all the PPAPI calls installed of CallOnMainThread?
 //   - See: "CallonMainThread kills performance" https://groups.google.com/d/msg/native-client-discuss/IhdJ-fAre8g/8pOPxzo5_DcJ
@@ -23,8 +17,6 @@
 int    nablue_main(int argc, char **argv);
 void*  main_entry(void *parm);
 int    __wrap_write(int, void *, size_t);
-
-void BrowserSysCallWrite( const char* dev, const char* buffer, size_t size );
 
 enum
 {
@@ -46,32 +38,6 @@ typedef struct MainThreadStatus MainThreadStatus ;
 
 pthread_t         g_MainThread;
 MainThreadStatus  g_MainThreadStatus;
-
-
-// --------------------------------------------------------------------------
-// Shared command buffer for commands that need to run on the NaCl thread
-//   #todo reduce locking
-// --------------------------------------------------------------------------
-
-typedef struct NaBlueCommand      NaBlueCommand;
-typedef struct NaBlueWriteCommand NaBlueWriteCommand;
-
-enum
-{
-  kNaBlueCommandWrite = 1,
-};
-
-struct NaBlueCommand
-{
-  int32_t m_Command;
-  size_t  m_Size;
-};
-
-struct NaBlueWriteCommand
-{
-  int32_t m_Fd;
-  size_t  m_Count;
-};
 
 void FlushCommands(void);
 
@@ -277,6 +243,16 @@ NaBlueCommand* NaBlueCommandGetNext( size_t offset )
   return NULL;
 }
 
+void NaBlueCommandWriteLock( void )
+{
+  pthread_rwlock_rdlock( &s_NaBlueCommandWriteLock );
+}
+
+void NaBlueCommandWriteUnlock( void )
+{
+  pthread_rwlock_unlock( &s_NaBlueCommandWriteLock );
+}
+
 // --------------------------------------------------------------------------
 // Required entry point functions -------------------------------------------
 // --------------------------------------------------------------------------
@@ -288,7 +264,15 @@ PP_Bool NaBlackHandleInputEvent( PP_Resource input_event )
 
 PP_Bool NaBlackInstanceCreate( uint32_t argc, const char* argn[], const char* argv[] )
 {
-  NaBlueCommandStartup();
+  if ( !NaBlueCommandStartup() )
+  {
+    return PP_FALSE;
+  }
+
+  if ( !NaBlueFileSystemStartup() )
+  {
+    return PP_FALSE;
+  }
 
   g_MainThreadStatus.m_Status = kMainStatusStarting;
   int main_start_result       = pthread_create(&g_MainThread, NULL, main_entry, NULL);
@@ -312,6 +296,7 @@ void NaBlackInstanceDestroy()
   }
 
   NaBlueCommandShutdown();
+  NaBlueFileSystemShutdown();
 }
 
 void NaBlackDidChangeView( PP_Resource view )
@@ -364,82 +349,28 @@ void* main_entry(void* parm)
   return NULL;
 }
 
-// --------------------------------------------------------------------------
-// Wrapped POSIX calls. 
-// - Called from application threads
-// - Queue commands to be processed from the main thread, when possible.
-// - Priority is given to functionality that provides easier porting 
-// - Someone needs to design a new OS standard that doesn't have all these
-//   goddamn return values which makes it impossible to design a real 
-//   concurrent model.
-// --------------------------------------------------------------------------
 
-int __wrap_write(int fd, void* buf, size_t count)
-{
-  // Aquire lock to let SwapBuffers know we're still writing. See #note-01
-  // The only time this should ever block is if we're actually in the middle of SwapBuffers()
-  pthread_rwlock_rdlock( &s_NaBlueCommandWriteLock );
-
-  size_t         packet_size = sizeof( NaBlueWriteCommand ) + count;
-  NaBlueCommand* command     = NaBlueCommandAllocate( kNaBlueCommandWrite, packet_size  );
-
-  if ( !command )
-  {
-    pthread_rwlock_unlock( &s_NaBlueCommandWriteLock );
-    return (0);
-  }
-
-  NaBlueWriteCommand* write_command = (NaBlueWriteCommand*) ( ( (char*)command ) + sizeof( NaBlueCommand ) );
-  char*               write_buffer  = ( (char*) write_command ) + sizeof( NaBlueWriteCommand );
-
-  write_command->m_Fd    = fd;
-  write_command->m_Count = count;
-
-  memcpy( write_buffer, buf, count );
-
-  pthread_rwlock_unlock( &s_NaBlueCommandWriteLock );
-
-  return ( count );
-}
-
-int ioctl(int d, unsigned long request, ...)
-{
-  int     exit_code = EINVAL;
-  va_list argp;
-
-  va_start( argp, request );
-
-  switch ( request )
-  {
-    // Get terminal dimensions
-    case TIOCGWINSZ:
-    {
-      // ATM only ZERO is supported for d
-      if ( d != 0 )
-      {
-        exit_code = EBADF;
-      }
-      else 
-      { 
-        struct winsize* size = va_arg(argp, struct winsize*);    
-  
-        // Hack in a size for the moment...
-        size->ws_col    = 80;
-        size->ws_row    = 25;
-        size->ws_xpixel = 0;
-        size->ws_ypixel = 0;
-        exit_code = 0;
-      }
-    }
-    break;
-  }
- 
-  va_end( argp );
-  return (exit_code);
-}
+// #todo Just generate the code that does the appropriate thing directly in the command buffer.
+// Reference: http://people.csail.mit.edu/jansel/papers/2011pldi-nacljit-slides.pdf
+//            http://code.google.com/p/minnacl/source/browse/tests/dynamic_code_loading/dynamic_modify_test.c
 
 void FlushCommands(void)
 {
+  int32_t  local_file_system_state = NaBlueGetLocalFileSystemState();
+  int32_t  temp_file_system_state  = NaBlueGetTempFileSystemState();
+
+  // Wait for file system to finish initializing
+  if ( local_file_system_state == kNaBlueFileSystemStateInitializing )
+  {
+    return;
+  }
+
+  // Wait for file system to finish initializing
+  if ( temp_file_system_state == kNaBlueFileSystemStateInitializing )
+  {
+    return;
+  }
+
   size_t         command_offset = 0;
   NaBlueCommand* command;
   int            command_count = 0;
@@ -451,28 +382,42 @@ void FlushCommands(void)
 
     switch ( command->m_Command )
     {
+      // --------------------------------------------------------------------------
+      // Wrapped POSIX calls. 
+      // - Called from application threads
+      // - Queue commands to be processed from the main thread, when possible.
+      // - Priority is given to functionality that provides easier porting 
+      // --------------------------------------------------------------------------
+
+      case kNaBlueCommandBrowserWrite:
+      {
+        NaBlueBrowserWriteCommand* write_command = (NaBlueBrowserWriteCommand*) ( ( (char*)command ) + sizeof( NaBlueCommand ) );
+        char*                      write_buffer  = ( (char*) write_command ) + sizeof( NaBlueBrowserWriteCommand );
+
+        NaBlueBrowserWrite( write_command->dev, write_buffer, write_command->count );
+      }
+      break;
+
       case kNaBlueCommandWrite:
       {
         NaBlueWriteCommand* write_command = (NaBlueWriteCommand*) ( ( (char*)command ) + sizeof( NaBlueCommand ) );
         char*               write_buffer  = ( (char*) write_command ) + sizeof( NaBlueWriteCommand );
 
-        if ( write_command->m_Fd == fileno(stdout) )
-        {
-          BrowserSysCallWrite( "/dev/stdout", write_buffer, write_command->m_Count );
-        } 
-        else if ( write_command->m_Fd == fileno(stderr) )
-        {
-          BrowserSysCallWrite( "/dev/stderr", write_buffer, write_command->m_Count );
-        }
-        else /* fd should have come from the browser via wrapped open(), so it's aware of it */
-        {
-          int  dev_len = sprintf( NULL, "/dev/fd/%d", write_command->m_Fd );
-          char dev[ dev_len+1 ]; 
-    
-          sprintf( dev, "/dev/fd/%d", write_command->m_Fd );
-          
-          BrowserSysCallWrite( dev, write_buffer, write_command->m_Count );
-        }
+        NaBlueFileWrite( write_command->fd, write_buffer, write_command->count );
+      }
+      break;
+
+      case kNaBlueCommandOpen:
+      {
+        NaBlueOpenCommand* open_command = (NaBlueOpenCommand*) ( ( (char*)command ) + sizeof( NaBlueCommand ) );
+        NaBlueFileOpen( open_command->fd );
+      }
+      break;
+
+      case kNaBlueCommandClose:
+      {
+        NaBlueCloseCommand* open_command = (NaBlueCloseCommand*) ( ( (char*)command ) + sizeof( NaBlueCommand ) );
+        NaBlueFileClose( open_command->fd );
       }
       break;
     }
@@ -481,173 +426,3 @@ void FlushCommands(void)
   NaBlueCommandSwapBuffers();
 }
 
-// --------------------------------------------------------------------------
-// Selected syscalls re-routed to the browser
-//   - Yes, it definitely could be thought of as a crazy-backward OS kernel.
-//   - These calls can only be called from the NaCl thread.
-//   - Internal use only!
-// --------------------------------------------------------------------------
-
-void BrowserSysCallWrite( const char* dev, const char* buffer, size_t size )
-{
-  int   encoded_len = strnurlencode( NULL, 0, buffer, size );
-  char* encoded_str = (char*)alloca( encoded_len+1 );
-
-  strnurlencode( encoded_str, encoded_len+1, buffer, size );
-
-  NaBlackMessagingPostPrintf( "{ \"func\": \"write\", \"dev\": \"%s\", \"data\": \"%s\", \"len\": %d }", dev, encoded_str, encoded_len );
-}
-
-// --------------------------------------------------------------------------
-// Utility functions 
-//   - Additional functions used both internally and provided to application
-// --------------------------------------------------------------------------
-
-/* Converts a hex character to its integer value */
-static char from_hex(char ch) {
-  return isdigit((int)ch) ? ch - '0' : tolower((int)ch) - 'a' + 10;
-}
-
-/* Converts an integer value to its hex character*/
-static char to_hex(char code) {
-  static char hex[] = "0123456789abcdef";
-  return hex[code & 15];
-}
-
-// --------------------------------------------------------------------------
-// int strnurlencode( char* dest, int dest_max_len, const char* str, size_t str_max_len ) 
-// int strnurldecode( char* dest, int dest_max_len, const char* str, size_t str_max_len ) 
-//
-// Convert to/from url encoded string
-// Example:
-// 
-//  int   encode_len = strnurlencode( NULL, 0, str, len );
-//  char* encode_str = (char*)alloca( encode_len+1 );
-//
-//  strnurlencode( encode_str, encode_len+1, str, len );
-//
-//  int   decode_len = strnurlencode( NULL, 0, encode_str, encode_len+1 );
-//  char* decode_str = (char*)alloca( decode_len+1 );
-//
-//  strnurldecode( decode_str, decode_len+1, encode_str, encode_len+1 );
-//
-//  if (strncmp(decode_str,str,len) != 0)
-//  {
-//    // -- ERROR! strings should match.
-//  }
-// --------------------------------------------------------------------------
-
-int strnurlencode( char* dest, int dest_max_len, const char* str, size_t str_max_len ) 
-{
-  char out[ str_max_len * 3 + 1 ];
-  int  len  = 0;
-
-  for  (int i=0;i<str_max_len;i++)
-  {
-    char c = str[i];;
-
-    if (c == 0)
-    {
-      break;
-    }
-
-    int is_alnum      = isalnum( (int)c );
-    int is_dash       = (c == '-');
-    int is_underscore = (c == '_');
-    int is_dot        = (c == '.');
-    int is_tilde      = (c == '~');
-    int is_pass_char  = is_alnum || is_dash || is_underscore || is_dot || is_tilde;
-    
-    if ( is_pass_char )
-    {
-      out[ len ] = str[i];
-      len++;
-    }
-    else
-    {
-      out[ len+0 ] = '%';
-      out[ len+1 ] = to_hex( c >> 4 );
-      out[ len+2 ] = to_hex( c & 0x0f );
-      len += 3;
-    }
-  }
-
-  out[ len ] = 0;
-
-  if ( dest )
-  {
-    strncpy( dest, out, dest_max_len );
-  }
-
-  return len;
-}
-
-int strnurldecode( char* dest, int dest_max_len, const char* str, size_t str_max_len ) 
-{
-  char out[ str_max_len + 1 ];
-  int  len  = 0;
-
-  for  (int i=0;i<str_max_len;i++)
-  {
-    char c = str[i];;
-
-    if (c == 0)
-    {
-      break;
-    }
-
-    int is_hex = (c == '%');
-
-    if ( is_hex )
-    {
-      if ( i < (str_max_len-2) )
-      {
-        char hi_c  = str[i+1];
-        char lo_c  = str[i+2];
-        char hi    = from_hex( hi_c ) << 4;
-        char lo    = from_hex( lo_c );
-        out[ len ] = hi | lo;
-        i += 2;
-      }
-    }
-    else
-    {
-      out[ len ] = c;
-    }
-    len++;
-  }
-
-  out[ len ] = 0;
-
-  if ( dest ) 
-  {
-    strncpy( dest, out, dest_max_len );
-  }
-
-  return len;
-}
-
-uint32_t next_pow2_u32(uint32_t x)
-{
-  x -= 1;
-  x |= (x >> 1);
-  x |= (x >> 2);
-  x |= (x >> 4);
-  x |= (x >> 8);
-  x |= (x >> 16);
-  
-  return x + 1;
-}
-
-uint64_t next_pow2_u64(uint64_t x)
-{
-  x -= 1;
-  x |= (x >> 1);
-  x |= (x >> 2);
-  x |= (x >> 4);
-  x |= (x >> 8);
-  x |= (x >> 16);
-  x |= (x >> 32);
-  
-  return x + 1;
-}

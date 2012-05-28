@@ -83,5 +83,7 @@ NativeBlueTerm = function( terminal_id, nmf ) {
   // Create the terminal
   //
 
-  hterm.init( hterm.NativeBlue.init );
+  window.webkitStorageInfo.requestQuota( PERSISTENT, 8 * 1024 * 1024 * 1024, function(grantedBytes) {
+    hterm.init( hterm.NativeBlue.init );
+  });
 };
