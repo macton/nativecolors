@@ -1,6 +1,7 @@
 #include <string.h>
 #include <sys/stat.h> 
 #include <fcntl.h>
+#include <unistd.h>
 #include "nativeblue_private.h"
 
 static void FileOpenComplete( void* user_data, int32_t result );
@@ -138,7 +139,7 @@ int __wrap_open(const char *path, int oflag, ... )
     return (fd);  
   }
 
-  NaBlueFreeFd(fd);
+  close(fd);
   return ( -1 );
 }
 

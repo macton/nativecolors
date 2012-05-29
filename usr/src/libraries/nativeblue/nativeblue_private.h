@@ -21,7 +21,9 @@ typedef struct NaBlueWriteCommand        NaBlueWriteCommand;
 typedef struct NaBlueReadCommand         NaBlueReadCommand;
 typedef struct NaBlueBrowserWriteCommand NaBlueBrowserWriteCommand;
 typedef struct NaBlueOpenCommand         NaBlueOpenCommand;
+typedef struct NaBlueMkDirCommand        NaBlueMkDirCommand;
 typedef struct NaBlueCloseCommand        NaBlueCloseCommand;
+typedef struct NaBlueFlushCommand        NaBlueFlushCommand;
 
 enum
 {
@@ -30,7 +32,9 @@ enum
   kNaBlueCommandWrite,
   kNaBlueCommandRead,
   kNaBlueCommandOpen,
-  kNaBlueCommandClose
+  kNaBlueCommandMkDir,
+  kNaBlueCommandClose,
+  kNaBlueCommandFlush
 };
 
 struct NaBlueCommand
@@ -63,7 +67,17 @@ struct NaBlueOpenCommand
   int     fd;
 };
 
+struct NaBlueMkDirCommand
+{
+  int     fd;
+};
+
 struct NaBlueCloseCommand
+{
+  int     fd;
+};
+
+struct NaBlueFlushCommand
 {
   int     fd;
 };
@@ -89,6 +103,7 @@ struct NaBlueFileDescription
   PP_FileInfo        fileInfo;
 
   int64_t            pos;
+  int64_t            savedPos;
   int64_t            targetPos;
   int64_t            rw_count;
   int32_t            state;
@@ -112,6 +127,8 @@ enum
   kNaBlueFileStateAllocated,
   /* -- Anything after this point assumes resources (fileio/fileref) have been allocated -- */
   kNaBlueFileStateOpening,
+  kNaBlueFileStateMakingDirectory,
+  kNaBlueFileStateFlushing,
   kNaBlueFileStateReading,
   kNaBlueFileStateWriting,
   kNaBlueFileStateSeeking,
@@ -138,10 +155,12 @@ PP_Resource            NaBlueGetTempFileSystem( void );
 int32_t                NaBlueGetLocalFileSystemState( void );
 int32_t                NaBlueGetTempFileSystemState( void );
 void                   NaBlueFileOpen( int fd );
+void                   NaBlueFileMkDir( int fd );
 void                   NaBlueBrowserWrite( const char* dev, const char* buffer, size_t size );
 void                   NaBlueFileWrite( int fd, const char* buffer, size_t size );
 void                   NaBlueFileRead( int fd, char* buffer, size_t size );
 void                   NaBlueFileClose( int fd );
+void                   NaBlueFileFlush( int fd );
 void                   NaBlueSetCwd( const char* path );
 const char*            NaBlueGetCwd( void );
 

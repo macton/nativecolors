@@ -423,10 +423,24 @@ void FlushCommands(void)
       }
       break;
 
+      case kNaBlueCommandMkDir:
+      {
+        NaBlueMkDirCommand* mkdir_command = (NaBlueMkDirCommand*) ( ( (char*)command ) + sizeof( NaBlueCommand ) );
+        NaBlueFileMkDir( mkdir_command->fd );
+      }
+      break;
+
       case kNaBlueCommandClose:
       {
-        NaBlueCloseCommand* open_command = (NaBlueCloseCommand*) ( ( (char*)command ) + sizeof( NaBlueCommand ) );
-        NaBlueFileClose( open_command->fd );
+        NaBlueCloseCommand* close_command = (NaBlueCloseCommand*) ( ( (char*)command ) + sizeof( NaBlueCommand ) );
+        NaBlueFileClose( close_command->fd );
+      }
+      break;
+
+      case kNaBlueCommandFlush:
+      {
+        NaBlueFlushCommand* flush_command = (NaBlueFlushCommand*) ( ( (char*)command ) + sizeof( NaBlueCommand ) );
+        NaBlueFileFlush( flush_command->fd );
       }
       break;
     }

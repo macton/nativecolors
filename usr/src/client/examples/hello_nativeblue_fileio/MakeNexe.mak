@@ -174,7 +174,7 @@ MAINOBJ  := $(patsubst %.c, %.$(OBJEXT).o, $(MAIN))
 OBJS     := $(patsubst %.c, %.$(OBJEXT).o, $(SOURCES))
 TC_PATH  := $(abspath $(NACL_SDK_ROOT)/toolchain/$(OSNAME)_x86_$(LIBCNAME))
 CC       := $(TC_PATH)/bin/i686-nacl-gcc
-LINK     := $(TC_PATH)/bin/i686-nacl-g++
+LINK     := $(TC_PATH)/bin/i686-nacl-gcc
 STRIP    := $(TC_PATH)/bin/i686-nacl-strip
 OBJCOPY  := $(TC_PATH)/bin/i686-nacl-objcopy
 
