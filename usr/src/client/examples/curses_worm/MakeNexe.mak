@@ -158,8 +158,8 @@ ifneq (gcc,$(filter gcc,$(MAKECMDGOALS)))
 LDFLAGS  += -lppapi
 LDFLAGS  += -L$(NATIVECOLORS_ROOT)/usr/lib
 LDFLAGS  += -l$(CURSES)
-LDFLAGS  += -l$(NATIVEBLUE)
 LDFLAGS  += -l$(NATIVEBLACK)
+LDFLAGS  += -l$(NATIVEBLUE)
 LDFLAGS  += -lppapi_gles2
 endif
 

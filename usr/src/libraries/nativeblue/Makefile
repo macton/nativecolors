@@ -24,7 +24,8 @@ SOURCES  := close.c \
             urlencode.c \
             write.c \
             writev.c \
-            mkdir.c 
+            mkdir.c  \
+            commandqueue.c 
 
 export PROJECT
 export SOURCES

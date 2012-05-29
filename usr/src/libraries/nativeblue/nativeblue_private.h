@@ -142,8 +142,11 @@ enum
   kNaBlueFileSystemStateError
 };
 
-int                    NaBlueFileSystemStartup(void);
-void                   NaBlueFileSystemShutdown(void);
+void                   NaBlueFlushCommands(void);
+int                    NaBlueCommandStartup( void );
+void                   NaBlueCommandShutdown( void );
+int                    NaBlueFileSystemStartup( void );
+void                   NaBlueFileSystemShutdown( void );
 void                   NaBlueFdStartup( void );
 void                   NaBlueFdShutdown( void );
 int                    NaBlueAllocFd( void );

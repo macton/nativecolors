@@ -43,5 +43,5 @@ hterm.Hello.prototype.run = function() {
   this.io  = this.argv_.io.push();
   var self = this;
 
-  self.io.println('\033[31;27mHello,\033[1m World!');
+  self.io.println('\033[32;40mHello, World!');
 };

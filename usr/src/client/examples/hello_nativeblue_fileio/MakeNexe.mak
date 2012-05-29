@@ -165,8 +165,8 @@ LDFLAGS  += -Wl,--undefined
 LDFLAGS  += -Wl,__wrap_read
 
 LDFLAGS  += -L$(NATIVECOLORS_ROOT)/usr/lib
-LDFLAGS  += -l$(NATIVEBLUE)
 LDFLAGS  += -l$(NATIVEBLACK)
+LDFLAGS  += -l$(NATIVEBLUE)
 LDFLAGS  += -lppapi_gles2
 endif
 

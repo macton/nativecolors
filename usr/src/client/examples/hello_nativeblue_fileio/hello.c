@@ -6,7 +6,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-#define VERSION            "81"
+#define VERSION            "82"
 #define TEST_DIR           "hellodir"
 #define TEST_FAIL_DIR      "some_nonexistant_directory"
 #define TEST_FILE          "hello.txt"
@@ -39,6 +39,12 @@ int main( void )
 
   int dir_fd = open( "/" TEST_DIR, O_RDONLY );
   printf("\033[37mdir open TEST = %s (fd=%d)\r\n", ( dir_fd >= 0 ) ? "\033[32mPASSED" : "\033[31mFAILED", dir_fd );
+
+  if ( dir_fd < 0 )
+  {
+    printf("\033[31m    FileIO::Open and FileIO::Query return PP_ERROR_FAILED on directories.\r\n");
+    printf("\033[31m    Follow-up: https://groups.google.com/d/msg/native-client-discuss/2huiRxDois4/TVTaFKmuUIgJ\r\n");  
+  }
   
   if ( dir_fd >= 0 )
   {

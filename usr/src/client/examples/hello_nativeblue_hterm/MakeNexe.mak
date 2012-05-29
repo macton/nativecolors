@@ -149,8 +149,8 @@ ifneq (gcc,$(filter gcc,$(MAKECMDGOALS)))
 # Seems to be randomly picky about lib include order. 
 LDFLAGS  += -lppapi
 LDFLAGS  += -L$(NATIVECOLORS_ROOT)/usr/lib
-LDFLAGS  += -l$(NATIVEBLUE)
 LDFLAGS  += -l$(NATIVEBLACK)
+LDFLAGS  += -l$(NATIVEBLUE)
 LDFLAGS  += -lppapi_gles2
 endif
 
