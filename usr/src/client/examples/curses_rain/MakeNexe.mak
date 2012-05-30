@@ -10,6 +10,10 @@ OSNAME      := $(shell python $(NACL_SDK_ROOT)/tools/getos.py)
 LDFLAGS     :=
 ifneq (gcc,$(filter gcc,$(MAKECMDGOALS)))
 CFLAGS      += -Xlinker --wrap -Xlinker write
+CFLAGS      += -Xlinker --wrap -Xlinker read
+CFLAGS      += -Xlinker --wrap -Xlinker open
+CFLAGS      += -Xlinker --wrap -Xlinker lseek
+CFLAGS      += -Xlinker --wrap -Xlinker isatty
 endif
 
 CFLAGS      += -I$(NATIVECOLORS_ROOT)/usr/include
@@ -17,6 +21,7 @@ CFLAGS      += -D_GNU_SOURCE
 NATIVEBLUE  := nativeblue
 NATIVEBLACK := nativeblack
 CURSES      := curses
+CJSON       := cjson
 
 # --------------------------------------------------------------------
 # glibc (newlib if not specified)
@@ -29,6 +34,7 @@ LIBCNAME    := glibc
 NATIVEBLUE  := $(NATIVEBLUE)-glibc
 NATIVEBLACK := $(NATIVEBLACK)-glibc
 CURSES      := $(CURSES)-glibc
+CJSON       := $(CJSON)-glibc
 else
 ifneq (gcc,$(filter gcc,$(MAKECMDGOALS)))
 PROJECT     := $(PROJECT)-newlib
@@ -37,6 +43,7 @@ LIBCNAME    := newlib
 NATIVEBLUE  := $(NATIVEBLUE)-newlib
 NATIVEBLACK := $(NATIVEBLACK)-newlib
 CURSES      := $(CURSES)-newlib
+CJSON       := $(CJSON)-newlib
 endif
 endif
 
@@ -52,6 +59,7 @@ CFLAGS      += -m32
 NATIVEBLUE  := $(NATIVEBLUE)-x86-32
 NATIVEBLACK := $(NATIVEBLACK)-x86-32
 CURSES      := $(CURSES)-x86-32
+CJSON       := $(CJSON)-x86-32
 endif
 
 # --------------------------------------------------------------------
@@ -66,6 +74,7 @@ CFLAGS      += -m64
 NATIVEBLUE  := $(NATIVEBLUE)-x86-64
 NATIVEBLACK := $(NATIVEBLACK)-x86-64
 CURSES      := $(CURSES)-x86-64
+CJSON       := $(CJSON)-x86-64
 endif
 
 # --------------------------------------------------------------------
@@ -77,6 +86,7 @@ ifeq (gcc,$(filter gcc,$(MAKECMDGOALS)))
 PROJECT  := $(PROJECT)-gcc
 OBJEXT   := gcc
 CURSES   := $(CURSES)-gcc
+CJSON    := $(CJSON)-gcc
 endif
 
 # --------------------------------------------------------------------
@@ -91,6 +101,7 @@ PROJECT     := $(PROJECT)-devel
 NATIVEBLUE  := $(NATIVEBLUE)-devel
 NATIVEBLACK := $(NATIVEBLACK)-devel
 CURSES      := $(CURSES)-devel
+CJSON       := $(CJSON)-devel
 endif
 
 # --------------------------------------------------------------------
@@ -104,6 +115,7 @@ PROJECT     := $(PROJECT)-debug
 NATIVEBLUE  := $(NATIVEBLUE)-debug
 NATIVEBLACK := $(NATIVEBLACK)-debug
 CURSES      := $(CURSES)-debug
+CJSON       := $(CJSON)-debug
 else
 CFLAGS   += -O2
 endif
@@ -156,11 +168,29 @@ glibc:
 ifneq (gcc,$(filter gcc,$(MAKECMDGOALS)))
 # Seems to be randomly picky about lib include order. 
 LDFLAGS  += -lppapi
+# Make sure these symbols get pulled in from the library
+LDFLAGS  += -Wl,--undefined
+LDFLAGS  += -Wl,__wrap_lseek
+LDFLAGS  += -Wl,--undefined
+LDFLAGS  += -Wl,__wrap_write
+LDFLAGS  += -Wl,--undefined
+LDFLAGS  += -Wl,__wrap_open
+LDFLAGS  += -Wl,--undefined
+LDFLAGS  += -Wl,__wrap_close
+LDFLAGS  += -Wl,--undefined
+LDFLAGS  += -Wl,__wrap_read
+LDFLAGS  += -Wl,--undefined
+LDFLAGS  += -Wl,__wrap_isatty
 LDFLAGS  += -L$(NATIVECOLORS_ROOT)/usr/lib
 LDFLAGS  += -l$(CURSES)
 LDFLAGS  += -l$(NATIVEBLACK)
 LDFLAGS  += -l$(NATIVEBLUE)
+LDFLAGS  += -l$(CJSON)
 LDFLAGS  += -lppapi_gles2
+LDFLAGS  += -lm
+else
+LDFLAGS  += -L$(NATIVECOLORS_ROOT)/usr/lib
+LDFLAGS  += -l$(CURSES)
 endif
 
 MAINOBJ  := $(patsubst %.c, %.$(OBJEXT).o, $(MAIN))

@@ -1,5 +1,6 @@
 #include <string.h>
 #include <alloca.h>
+#include <unistd.h>
 #include "nativeblue_private.h"
 
 static ssize_t BrowserQueueWrite( const char* dev, void* buf, size_t count );
@@ -11,14 +12,20 @@ static void    FileWriteComplete( void* user_data, int32_t result );
 
 ssize_t __wrap_write(int fd, void* buf, size_t count)
 {
-  int            is_stdout       = ( fd == fileno(stdout) );
-  int            is_stderr       = ( fd == fileno(stderr) );
-  int            is_browser_file = is_stdout || is_stderr;
-
-  if ( is_browser_file )
+  if ( fd == fileno(stdout) )
   {
-    char*  dev = ( is_stdout ) ? "/dev/stdout" : "/dev/stderr";
-    return BrowserQueueWrite( dev, buf, count );
+    if ( isatty( fileno(stdout) ) )
+    {
+      return BrowserQueueWrite( "/dev/stdout", buf, count );
+    }
+  }
+
+  if ( fd == fileno(stderr) )
+  {
+    if ( isatty( fileno(stderr) ) )
+    {
+      return BrowserQueueWrite( "/dev/stderr", buf, count );
+    }
   }
 
   return LocalQueueWrite( fd, buf, count );

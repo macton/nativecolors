@@ -1,6 +1,8 @@
 #include <stdarg.h>
 #include <errno.h>
 #include <sys/ioctl.h>
+#include <unistd.h>
+#include "nativeblue_private.h"
 
 int ioctl(int d, unsigned long request, ...)
 {
@@ -15,20 +17,20 @@ int ioctl(int d, unsigned long request, ...)
     case TIOCGWINSZ:
     {
       // ATM only ZERO is supported for d
-      if ( d != 0 )
+      if ( ( d == 0 ) && ( NaBlueWaitTTYConnected( fileno(stdout) ) ) )
       {
-        exit_code = EBADF;
-      }
-      else 
-      { 
         struct winsize* size = va_arg(argp, struct winsize*);    
   
         // Hack in a size for the moment...
-        size->ws_col    = 80;
-        size->ws_row    = 25;
+        size->ws_col    = NaBlueTTYWidth( d );
+        size->ws_row    = NaBlueTTYHeight( d ) ;
         size->ws_xpixel = 0;
         size->ws_ypixel = 0;
         exit_code = 0;
+      }
+      else
+      {
+        exit_code = ENOTTY;
       }
     }
     break;

@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <alloca.h>
 #include <ctype.h>
+#include <cJSON.h>
 #include <nativeblack.h>
 #include "nativeblue_private.h"
 
@@ -95,6 +96,35 @@ PP_Bool NaBlackHandleDocumentLoad( PP_Resource url_loader )
 
 void NaBlackHandleMessage( PP_Var message )
 {
+  uint32_t    var_len;
+  const char* var = NaBlackVarVarToUtf8( message, &var_len );
+
+  if ( var_len == 0 )
+  {
+    return;
+  }
+
+  cJSON* json = cJSON_Parse( var );
+
+  if ( json == NULL )
+  {
+    return;
+  }
+
+  cJSON* func = cJSON_GetObjectItem( json, "func" );
+
+  if ( func->type == cJSON_String )
+  {
+    if ( strcmp( func->valuestring, "TTYResize" ) == 0 ) 
+    {
+      cJSON* width  = cJSON_GetObjectItem( json, "width"  );
+      cJSON* height = cJSON_GetObjectItem( json, "height" );
+
+      NaBlueTTYResize( width->valueint, height->valueint );
+    }
+  }
+
+  cJSON_Delete( json );
 }
 
 void NaBlackMouseLockLost()

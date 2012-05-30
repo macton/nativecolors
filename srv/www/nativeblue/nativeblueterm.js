@@ -41,6 +41,7 @@ NativeBlueTerm = function( terminal_id, nmf ) {
       // self.io.println('PLUGIN_LOADING_COMPLETE.');
 
       self.io.onTerminalResize = self.onTerminalResize.bind(self);
+      self.onTerminalResize( self.terminal.screenSize.width, self.terminal.screenSize.height );
     };
   
     // self.io.println('PLUGIN LOADING...');
@@ -56,7 +57,9 @@ NativeBlueTerm = function( terminal_id, nmf ) {
     self.plugin.addEventListener('load', onPluginLoaded);
     self.plugin.addEventListener('message', self.onPluginMessage.bind(self));
 
-  
+    // var str = JSON.stringify({func: "TTYResize", width: self.terminal.screenSize.width, height: self.terminal.screenSize.height});
+    // self.plugin.postMessage(str);
+
     document.body.insertBefore(self.plugin, document.body.firstChild);
   };
   
@@ -75,8 +78,10 @@ NativeBlueTerm = function( terminal_id, nmf ) {
   };
 
   hterm.NativeBlue.prototype.onTerminalResize = function(width, height) {
-    // var str = JSON.stringify({name: name, arguments: arguments});
-    // this.plugin_.postMessage(str);
+    var self = this;
+
+    var str = JSON.stringify({func: "TTYResize", width: width, height: height});
+    self.plugin.postMessage(str);
   };
 
   //

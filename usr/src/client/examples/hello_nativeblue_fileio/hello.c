@@ -6,7 +6,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-#define VERSION            "82"
+#define VERSION            "86"
 #define TEST_DIR           "hellodir"
 #define TEST_FAIL_DIR      "some_nonexistant_directory"
 #define TEST_FILE          "hello.txt"
@@ -23,8 +23,13 @@ void test_write( void );
 void test_size( void );
 void test_read( void );
 
+int fileno( FILE* file );
+
 int main( void )
 {
+  printf("fileno(stdout) = %d\r\n",fileno(stdout));
+  printf("fileno(stdin)  = %d\r\n",fileno(stdin));
+  printf("fileno(stderr) = %d\r\n",fileno(stderr));
   printf("\033[33m%s", data );
   printf("\r\n");
   printf("\033[33mTIP: Use File System Explorer for debugging:\r\n");

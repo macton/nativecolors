@@ -166,4 +166,9 @@ void                   NaBlueFileClose( int fd );
 void                   NaBlueFileFlush( int fd );
 void                   NaBlueSetCwd( const char* path );
 const char*            NaBlueGetCwd( void );
+void                   NaBlueTTYResize( int width, int height );
+int                    NaBlueWaitTTYConnected( int fd );
+int                    NaBlueTTYWidth( int fd );
+int                    NaBlueTTYHeight( int fd );
+
 
