@@ -5,9 +5,17 @@ libnativeblue is a C library designed as a simple wrapper for headless NaCl appl
 
 - Redirect stdin and stdout from browser
 - Provide familiar main() function
+- Support POSIX layer stuff where possible
+- Support standard file i/o via FileSystem API
 
 DEPENDENCIES
 ------------
 
 - nacl_sdk/pepper_19
 - libnativeblack
+- libjsonc
+
+REFERENCE
+---------
+- Newlib source: http://git.chromium.org/gitweb/?p=native_client/nacl-newlib.git
+- NaCl source:   http://src.chromium.org/viewvc/native_client/trunk/src/native_client/src/untrusted/ 
