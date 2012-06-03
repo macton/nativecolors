@@ -4,7 +4,8 @@
 
 PROJECT  := hello
 DEPS     := 
-SOURCES  := hello.c
+SOURCES  := hello.c 
+# ftell.c fstat.c fseek.c
 MAIN     := hello.c
 
 export PROJECT

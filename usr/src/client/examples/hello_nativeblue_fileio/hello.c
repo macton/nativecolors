@@ -5,13 +5,14 @@
 #include <alloca.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <errno.h>
 
-#define VERSION            "86"
+#define VERSION            "105"
 #define TEST_DIR           "hellodir"
 #define TEST_FAIL_DIR      "some_nonexistant_directory"
 #define TEST_FILE          "hello.txt"
 #define VBUF_SIZE          (1024*1024)
-#define EXPECTED_FILE_SIZE 58942
+#define EXPECTED_FILE_SIZE 58944
 
 char* data = "Hello, World! version=" VERSION "\r\n";
 
@@ -22,6 +23,7 @@ char  test_buf[ VBUF_SIZE ];
 void test_write( void );
 void test_size( void );
 void test_read( void );
+void test_stat( void );
 
 int fileno( FILE* file );
 
@@ -67,10 +69,28 @@ int main( void )
   }
 
   test_write();
+  test_stat();
   test_size();
   test_read();
 
   return (0);
+}
+
+void test_stat( void )
+{
+  struct stat info;
+  memset(&info,0,sizeof(struct stat));
+  int result = stat( TEST_FILE, &info );
+  if ( result == -1 )
+  {
+    printf("\033[37mstat TEST = \033[31mFAILED\r\n");
+    printf("stat result=%d errno=%d\r\n",result,errno);
+  }
+  else
+  {
+    printf("\033[37mstat TEST = \033[32mPASSED\r\n");
+    printf("stat size=%d\r\n",(int)info.st_size); 
+  }
 }
 
 void test_write( void )
@@ -127,6 +147,7 @@ void test_size( void )
   long size = ftell( file );
   printf("\033[37mftell size = %d\r\n", (int)size );
   printf("\033[37mftell size TEST = %s\r\n", (size == EXPECTED_FILE_SIZE) ? "\033[32mPASSED" : "\033[31mFAILED");
+  printf("errno=%d\r\n",errno);
 
   int close_result = fclose( file );
   printf("\033[37mfclose for size TEST = %s\r\n", ( close_result == 0 ) ? "\033[32mPASSED" : "\033[31mFAILED" );

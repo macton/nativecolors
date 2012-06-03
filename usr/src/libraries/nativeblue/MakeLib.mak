@@ -9,6 +9,7 @@ ARFLAGS  := rcs
 OSNAME   := $(shell python $(NACL_SDK_ROOT)/tools/getos.py)
 CFLAGS   += -I$(NATIVECOLORS_ROOT)/usr/include
 CFLAGS   += -D_GNU_SOURCE
+CFLAGS   += -D_LARGEFILE64_SOURCE
 
 # --------------------------------------------------------------------
 # glibc (newlib if not specified)

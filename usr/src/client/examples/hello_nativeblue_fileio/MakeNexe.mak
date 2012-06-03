@@ -13,11 +13,13 @@ CFLAGS      += -Xlinker --wrap -Xlinker write
 CFLAGS      += -Xlinker --wrap -Xlinker read
 CFLAGS      += -Xlinker --wrap -Xlinker open
 CFLAGS      += -Xlinker --wrap -Xlinker lseek
+CFLAGS      += -Xlinker --wrap -Xlinker stat
 CFLAGS      += -Xlinker --wrap -Xlinker isatty
 endif
 
 CFLAGS      += -I$(NATIVECOLORS_ROOT)/usr/include
 CFLAGS      += -D_GNU_SOURCE
+CFLAGS      += -D_LARGEFILE64_SOURCE
 NATIVEBLUE  := nativeblue
 NATIVEBLACK := nativeblack
 CJSON       := cjson
@@ -161,18 +163,22 @@ ifneq (gcc,$(filter gcc,$(MAKECMDGOALS)))
 LDFLAGS  += -lppapi
 
 # Make sure these symbols get pulled in from the library
+# LDFLAGS  += -Wl,--undefined
+# LDFLAGS  += -Wl,__wrap_access
 LDFLAGS  += -Wl,--undefined
 LDFLAGS  += -Wl,__wrap_lseek
-LDFLAGS  += -Wl,--undefined
-LDFLAGS  += -Wl,__wrap_write
-LDFLAGS  += -Wl,--undefined
-LDFLAGS  += -Wl,__wrap_open
-LDFLAGS  += -Wl,--undefined
-LDFLAGS  += -Wl,__wrap_close
-LDFLAGS  += -Wl,--undefined
-LDFLAGS  += -Wl,__wrap_read
-LDFLAGS  += -Wl,--undefined
-LDFLAGS  += -Wl,__wrap_isatty
+# LDFLAGS  += -Wl,--undefined
+# LDFLAGS  += -Wl,__wrap_stat
+# LDFLAGS  += -Wl,--undefined
+# LDFLAGS  += -Wl,__wrap_write
+# LDFLAGS  += -Wl,--undefined
+# LDFLAGS  += -Wl,__wrap_open
+# LDFLAGS  += -Wl,--undefined
+# LDFLAGS  += -Wl,__wrap_close
+# LDFLAGS  += -Wl,--undefined
+# LDFLAGS  += -Wl,__wrap_read
+# LDFLAGS  += -Wl,--undefined
+# LDFLAGS  += -Wl,__wrap_isatty
 
 LDFLAGS  += -L$(NATIVECOLORS_ROOT)/usr/lib
 LDFLAGS  += -l$(NATIVEBLACK)

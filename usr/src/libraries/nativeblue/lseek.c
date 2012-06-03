@@ -1,14 +1,18 @@
 #include <errno.h>
+#include <sys/types.h>
+#include <unistd.h>
 #include "nativeblue_private.h"
 
-int __wrap_lseek(int fd, int offset, int whence) 
+off_t __wrap_lseek(int fd, off_t offset, int whence) 
 {
   NaBlueFileDescription* file = NaBlueGetFileDescription( fd );
+
+  off_t result = -1;
 
   if ( file == NULL )
   {
     errno = EBADF;
-    return ((off_t)-1);
+    result =  ((off_t)-1);
   }
 
   switch ( whence )
@@ -16,29 +20,31 @@ int __wrap_lseek(int fd, int offset, int whence)
     case SEEK_SET:
     {
       file->pos = offset;
-      return (off_t)( file->pos );
+      result =  (off_t)( file->pos );
     }
     break;
 
     case SEEK_CUR:
     {
       file->pos += offset;
-      return (off_t)( file->pos );
+      result =  (off_t)( file->pos );
     }
     break;
 
     case SEEK_END:
     {
       file->pos = file->fileInfo.size + offset;
-      return (off_t)( file->pos );
+      result =  (off_t)( file->pos );
     }
     break;
 
     default:
     {
       errno = EINVAL;  
-      return ((off_t)-1);
+      result =  ((off_t)-1);
     }
     break;
   }
+
+  return (result);
 }

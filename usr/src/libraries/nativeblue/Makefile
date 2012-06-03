@@ -26,7 +26,8 @@ SOURCES  := close.c \
             writev.c \
             mkdir.c  \
             commandqueue.c  \
-            tty.c 
+            tty.c  \
+            stat.c  
 
 export PROJECT
 export SOURCES

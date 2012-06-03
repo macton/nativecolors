@@ -52,7 +52,7 @@ NativeBlueTerm = function( terminal_id, nmf ) {
          'top: -99px' +
          'width: 0;' +
          'height: 0;');
-    self.plugin.setAttribute('src', window.nmf );
+    self.plugin.setAttribute('src', window.nmf + '?'+ Date.now() );
     self.plugin.setAttribute('type', 'application/x-nacl');
     self.plugin.addEventListener('load', onPluginLoaded);
     self.plugin.addEventListener('message', self.onPluginMessage.bind(self));

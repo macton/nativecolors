@@ -7,7 +7,7 @@
 static void FileOpenComplete( void* user_data, int32_t result );
 static void FileQueryComplete( void* user_data, int32_t result );
 
-int __wrap_open(const char *path, int oflag, ... )
+int __wrap_open( const char* path, int oflag, ... )
 {
   int fd = NaBlueAllocFd();
 

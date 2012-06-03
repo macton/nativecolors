@@ -3,6 +3,8 @@
 #include <nativeblack.h>
 #include "nativeblue.h"
 #include <pthread.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 enum
 {
