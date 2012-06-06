@@ -110,6 +110,56 @@ more posix-like interface.
 
 See example: nativecolors/client/src/tests/macton-05-nativeblue-fileio/
 
+CLIENT PORTS
+------------
+  - hterm ported
+    - Dependency on chrome.i18n patched out
+
+  - pdcurses (libcurses.a) ported
+    - All output commands functional
+    - TTY output to hterm
+    - #todo stdin support (kbm)
+    - No 256 color palette support
+    - see example src: nativecolors/client/src/ports/curses-firework
+    - see example app: nativecolors/client/srv/www/curses-firework
+
+  - cJSON (libcjson.a) ported
+    - Fully functional. 
+    - Used directly by nativeblue
+
+  - libarchive (libarchive.a) ported
+    - Support for ISO9960 writes removed
+    - Support for mtree removed
+    - Not fully tested. 
+    - #todo add tests
+
+  - zlib (libz.a) ported
+    - Fully functional
+
+HOST PORTS
+----------
+  - pdcurses (libcurses.a) ported
+    - All output commands functional
+    - TTY output to hterm
+    - #todo stdin support (kbm)
+    - No 256 color palette support
+    - see example src: nativecolors/host/src/ports/curses-firework
+    - see example nexe: nativecolors/host/bin/$(TARGET)/nacl-curses-firework
+
+  - echo ported
+    - see nexe: nativecolors/host/bin/$(TARGET)/nacl-echo
+
+  - libarchive (libarchive.a) ported
+    - Support for ISO9960 writes removed
+    - Support for mtree removed
+    - Not fully tested. 
+    - #todo add tests
+
+  - zlib (libz.a) ported
+    - Fully functional
+    - see example src: nativecolors/host/src/ports/nacl-gunzip
+    - see example app: nativecolors/host/bin/$(TARGET)/nacl-gunzip
+
 
 HOW-TO USE
 ----------
