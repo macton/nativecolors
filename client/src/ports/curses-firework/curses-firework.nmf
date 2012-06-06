@@ -1,0 +1,6 @@
+{
+  "program": {
+    "x86-32": {"url": "bin/newlib-x86-32/curses-firework"},
+    "x86-64": {"url": "bin/newlib-x86-64/curses-firework"}
+  }
+}

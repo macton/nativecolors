@@ -1,0 +1,4 @@
+#!/bin/sh
+export LINES=`stty -a | grep rows | awk '{ gsub(/;/,""); print $5; }'`
+export COLUMNS=`stty -a | grep rows | awk '{ gsub(/;/,""); print $7; }'`
+/home/ubuntu/nacl_sdk/pepper_19/tools/sel_ldr_x86_64 -a -S -B /home/ubuntu/nacl_sdk/pepper_19/tools/irt_core_x86_64.nexe -l /dev/null -ECONTENT_LENGTH=${CONTENT_LENGTH} -EHTTP_HOST=${HTTP_HOST} -ELINES=${LINES} -ECOLUMNS=${COLUMNS} "$@" 

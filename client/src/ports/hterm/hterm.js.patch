@@ -1,0 +1,22 @@
+--- hterm.js.orig	2012-06-06 06:41:06.586423126 +0000
++++ hterm.js	2012-06-06 06:42:37.402418561 +0000
+@@ -63,9 +63,17 @@
+  * @param {Array} opt_args The message arguments, if required.
+  */
+ hterm.msg = function(name, opt_args) {
+-  var rv = chrome.i18n.getMessage(name, opt_args);
+-  if (!rv)
++
++  var rv;
++
++  if ( chrome.i18n ) {
++    rv = chrome.i18n.getMessage(name, opt_args);
++  }
++
++  if (!rv) {
+     console.log('Missing message: ' + name);
++    rv = name;
++  }
+ 
+   return rv;
+ };

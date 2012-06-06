@@ -1,9 +1,0 @@
-BUILDING SOURCES
-================
-In general:
-
-$ make
-- Will build basic variations (x86_32, x86_64 plus devel and devel-debug versions of each)
-
-$ make install
-- Will copy built files to appropriate /srv directory

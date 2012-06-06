@@ -1,0 +1,17 @@
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/native_client/!svn/ver/6896/trunk/src/native_client/tests/irt
+END
+nacl.scons
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/native_client/!svn/ver/6896/trunk/src/native_client/tests/irt/nacl.scons
+END
+irt_present_test.c
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/native_client/!svn/ver/6896/trunk/src/native_client/tests/irt/irt_present_test.c
+END

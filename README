@@ -68,6 +68,16 @@ Loosely based on fhs http://www.pathname.com/fhs/pub/fhs-2.3.html
 
 TODO
 ----
+Potential roadmap:
+- userspace kernel (ioctl)
+- loop device driver
+- FUSE driver
+- FUSE file based on AncientFS/UnixFS http://osxbook.com/blog/2008/12/16/more-user-space-file-system-goodies/
+- FUSE ext driver http://alperakcan.org/?open=projects&project=fuse-ext2
+- Socket API + server proxy?
+- BusyBox  http://www.busybox.net/
+- GCC
+
 Some stuff I want to do in no particular order:
 
 - shell
@@ -81,6 +91,7 @@ Some stuff I want to do in no particular order:
 - Use Tundra build system
 - native-host server to provide file i/o via dropbox API. Use liboauth.
 -- Or maybe dropbox API to FileSystem API sync. See: http://www.html5rocks.com/en/tutorials/file/filesystem/
+-- I wonder if a FUSE port and then a dropbox FUSE driver would be better?
 - native-host server to provide socket proxy for client builds. Use libwebsockets.
 - Build some stuff from nacl_ports
 -- bzip2-1.0.6
