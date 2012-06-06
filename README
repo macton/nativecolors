@@ -1,69 +1,182 @@
-Native Colors SDK
------------------
+NATIVECOLORS
+------------
+<macton@gmail.com>
+<macton@insomniacgames.com>
 
-Focused on making standard interfaces work on Native Client (NaCl) to make porting other stuff easier.
+This is an evolving project. It initially started out conceptually as just adding a few standard 
+interfaces to make porting some things easier. But quickly, a new end-game has revealed itself.
 
-export NATIVECOLORS_ROOT to this directory in your shell.
+It's currently in a working state, but very far from the long term goals. Both are described
+below.
 
-#todo write more stuff here
+Input, questions and participation are welcomed.
+
+
+LONG-TERM GOALS
+---------------
+Create a self-contained, portable user-space. 
+
+  - Install a light posix-ish OS in-browser with no host required (aside from web/socket server)
+  - Boot into OS. Full filesystem mounted (with meta-data support for user-permissions, etc.)
+  - Run shell and typical unix commands (e.g. BusyBox)
+  - Build new applications locally, in browser with gcc
+  - Support package manager (e.g. apt-get)
+
+
+CURRENT STATE
+-------------
+NativeColors is currently divided into three main support libraries called NativeYellow, NativeBlack
+and NativeBlue.
+  - Only Pepper 19 is supported.
+  - All libraries are functional, it's more a question of how much functionality.
+  - The interfaces are evolving and definitely not stable.
+  - Have a look at the test files for current working state and functionality.
+
+
+NATIVEYELLOW
+------------
+nativecolors/host/src/libraries/sys-headers/
+nativecolors/host/src/libraries/nativeyellow/
+
+NativeYellow is the support library for running NaCl executables on the host platform. Consider it 
+an extension to libc. Mostly it's a few small patches to standard functions to help with porting
+applications and libraries. Modifications to system headers (e.g. stdlib.h, pthread.h) are separated
+into sys-headers to simplify dependencies.
+
+All host executables are run through sel_ldr and are limited to the functionality of that irt. However,
+the libraries and executables should be usable without modification on any platform that supports
+sel_ldr.
+
+Status:
+  - ioctl TIOCGWINSZ gets LINES and COLUMNS from the environment for tty display
+  - pthread rw_lock supported
+  - writev supported
+  - helper functions added: e.g. strurlendcode, strurldecode
+
+See tests: nativecolors/host/src/tests/
+
+
+NATIVEBLACK
+-----------
+nativecolors/client/src/libraries/nativeblack/
+
+NativeBlack is a C API partially generated from the NaCl C PPAPI for client (in-browser) applications.
+The goals of the API are:
+
+  - Provide only a thin wrapper on the PPAPI (no or minimal runtime cost)
+  - Simplify the API without changing it singificantly. 
+    - e.g. Assume only a single instance per module.
+    - The names and purpose of the API functions should be coresspond directly to the C PPAPI
+  - Add basic utility functions
+    - All additional functions or structures outside of the C PPAPI should be marked "#nablack-utility"
+    - The TWEAK macros give access to specific variables from the browser for development.
+  - Add basic conventions
+
+Status:
+  - Full Pepper 19 API
+  - Simplified single-instance interface
+  - All PPAPI interfaces are initialized on startup
+
+You can use the NativeBlack lib alone if you want a slightly simplified interface to the NaCl PPAPI where
+most of the boilerplate code is taken care of. You just provide the entry functions.
+
+See example: nativecolors/client/src/tests/macton-01-nativeblack-hello/
+
+
+NATIVEBLUE
+----------
+nativecolors/client/src/libraries/sys-headers/
+nativecolors/client/src/libraries/nativeblue/
+
+NativeBlue is where things start to get interesting. This is a support library for client (in-browser)
+applications which builds on top of NativeBlack to provide a more posix-like interface. 
+
+  - At the basic level, it's equivalent to NativeYellow for the client. It just fills in some of the
+    gaps in libc.
+  - Standard fileio functions are supported (using File System API to write in-client files.)
+  - stdin/stderr/stdout TTY is managed and provided in-browser by hterm
+  - PPAPI functions are placed on to a command queue and processed once per frame. The provided functions
+    can be called from any thread at any time.
+
+See example: nativecolors/client/src/tests/macton-05-nativeblue-fileio/
+
+
+HOW-TO USE
+----------
+  - Make sure nacl_sdk is installed and working
+  - export NATIVECOLORS_ROOT to this directory in your shell.
+
 
 DIRECTORY STRUCTURE
 -------------------
 Loosely based on fhs http://www.pathname.com/fhs/pub/fhs-2.3.html
 
-/usr
+/client
+  - Files intended for use on the client. But built on the host.
 
-/usr/src
-- Source specific to this environment 
+/client/include
+  - Installed include files for client libraries and executables.
 
-/usr/src/client
-- Applications intended to run on the client. Installed to /srv/www
+/client/lib
+  - Installed libraries for client executables.
 
-/usr/src/client/examples
-- Very small examples to get you started creating new nativecolors or general native client projects
+/client/src
+  - Buildable source for client libraries and executables.
 
-/usr/src/host
-- Applications intended to run on the host. Installed to /usr/bin
+/client/src/packages
+  - Read-only hosted external source.  
+  - Do not change from original source. Any necessary patches should be applied in /client/src/ports.
 
-/usr/src/libraries
-- Libraries intended that may be used for either host or client applications
+/client/src/ports
+  - Build scripts and patches to build packages. May be libraries or applications.
 
-/usr/packages
-- Read-only hosted external source packages.
-- Do not change from original source. Any necessary patches should be applied in /usr/ports.
+/client/src/libraries
+  - Libraries (non-ports) for building client applications
 
-/usr/ports
-- Build scripts and any additional patches required to build packages for the nativecolors environment
-  or native client in general.
+/client/src/projects
+  - Client applications (non-ports)
 
-/usr/ports/libraries
-- Libraries intended that may be used for either host or client applications
+/client/src/tests
+  - Test applications to run on client.
 
-/usr/ports/host
-- Applications intended to be run on the host. Installed to /usr/bin/
+/client/srv
+  - Files expected to be served from a server running on the environment hosting these files
 
-/usr/ports/client
-- Applications intended to be run on the client. Installed to /srv/www/
+/client/srv/www
+  - Files expected to be served from an http server. This directory is assumed to be the root of that
+    server.
+  - Projects from /client/src/ports and /client/src/projects are installed in this directory.
 
-/usr/bin
-- Pre-build binaries (nexe) which can be used on in the nativecolors environment on any host.
+/host
+  - Files intended for use on the host. But built on the host.
 
-/usr/include
-- Include files from ports and /src projects used to compile projects.
+/host/include
+  - Installed include files for host libraries and executables.
 
-/usr/lib
-- Pre-built libraries from from ports and /src projects used to build projects.
+/host/lib
+  - Installed libraries for host executables.
 
-/usr/archive
-- Random stuff saved for reference
+/host/bin
+  - Pre-built binaries which can be run on the host.
 
-/srv
-- Files expected to be served from a server running on the environment hosting these files
+/host/src
+  - Buildable source for host libraries and executables.
 
-/srv/www
-- Files expected to be served from an http server. This directory is assumed to be the root of that
-  server.
-- Projects from /usr/ports/client and /usr/src may be pre-installed in this directory.
+/host/src/packages
+  - Read-only hosted external source.  
+  - Do not change from original source. Any necessary patches should be applied in /host/src/ports.
+
+/host/src/ports
+  - Build scripts and patches to build packages. May be libraries or applications.
+
+/host/src/libraries
+  - Libraries (non-ports) for building host applications
+
+/host/src/projects
+  - Client applications (non-ports)
+
+/host/src/tests
+  - Test applications to run on host.
 
 
 TODO
