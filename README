@@ -1,13 +1,14 @@
 NATIVECOLORS
-------------
+-----------------------------------------------------------------------------------
 <macton@gmail.com>
 <macton@insomniacgames.com>
 
-This is an evolving project. It initially started out conceptually as just adding a few standard 
-interfaces to make porting some things easier. But quickly, a new end-game has revealed itself.
+This is an evolving project. It initially started out conceptually as just adding a
+few standard interfaces to make porting some things easier. But quickly, a new 
+end-game has revealed itself.
 
-It's currently in a working state, but very far from the long term goals. Both are described
-below.
+It's currently in a working state, but very far from the long term goals. Both are 
+described below.
 
 Input, questions and participation are welcomed.
 
@@ -16,8 +17,10 @@ LONG-TERM GOALS
 ---------------
 Create a self-contained, portable user-space. 
 
-  - Install a light posix-ish OS in-browser with no host required (aside from web/socket server)
-  - Boot into OS. Full filesystem mounted (with meta-data support for user-permissions, etc.)
+  - Install a light posix-ish OS in-browser with no host required (aside from 
+    web/socket server)
+  - Boot into OS. Full filesystem mounted (with meta-data support for 
+    user-permissions, etc.)
   - Run shell and typical unix commands (e.g. BusyBox)
   - Build new applications locally, in browser with gcc
   - Support package manager (e.g. apt-get)
@@ -25,8 +28,8 @@ Create a self-contained, portable user-space.
 
 CURRENT STATE
 -------------
-NativeColors is currently divided into three main support libraries called NativeYellow, NativeBlack
-and NativeBlue.
+NativeColors is currently divided into three main support libraries called 
+NativeYellow, NativeBlack and NativeBlue.
   - Only Pepper 19 is supported.
   - All libraries are functional, it's more a question of how much functionality.
   - The interfaces are evolving and definitely not stable.
@@ -38,14 +41,15 @@ NATIVEYELLOW
 nativecolors/host/src/libraries/sys-headers/
 nativecolors/host/src/libraries/nativeyellow/
 
-NativeYellow is the support library for running NaCl executables on the host platform. Consider it 
-an extension to libc. Mostly it's a few small patches to standard functions to help with porting
-applications and libraries. Modifications to system headers (e.g. stdlib.h, pthread.h) are separated
-into sys-headers to simplify dependencies.
+NativeYellow is the support library for running NaCl executables on the host 
+platform. Consider it an extension to libc. Mostly it's a few small patches to 
+standard functions to help with porting applications and libraries. Modifications 
+to system headers (e.g. stdlib.h, pthread.h) are separated into sys-headers to 
+simplify dependencies.
 
-All host executables are run through sel_ldr and are limited to the functionality of that irt. However,
-the libraries and executables should be usable without modification on any platform that supports
-sel_ldr.
+All host executables are run through sel_ldr and are limited to the functionality 
+of that irt. However, the libraries and executables should be usable without i
+modification on any platform that supports sel_ldr.
 
 Status:
   - ioctl TIOCGWINSZ gets LINES and COLUMNS from the environment for tty display
@@ -60,16 +64,19 @@ NATIVEBLACK
 -----------
 nativecolors/client/src/libraries/nativeblack/
 
-NativeBlack is a C API partially generated from the NaCl C PPAPI for client (in-browser) applications.
-The goals of the API are:
+NativeBlack is a C API partially generated from the NaCl C PPAPI for client 
+(in-browser) applications.  The goals of the API are:
 
   - Provide only a thin wrapper on the PPAPI (no or minimal runtime cost)
   - Simplify the API without changing it singificantly. 
     - e.g. Assume only a single instance per module.
-    - The names and purpose of the API functions should be coresspond directly to the C PPAPI
+    - The names and purpose of the API functions should be coresspond directly to 
+      the C PPAPI
   - Add basic utility functions
-    - All additional functions or structures outside of the C PPAPI should be marked "#nablack-utility"
-    - The TWEAK macros give access to specific variables from the browser for development.
+    - All additional functions or structures outside of the C PPAPI should be 
+      marked "#nablack-utility"
+    - The TWEAK macros give access to specific variables from the browser for 
+      development.
   - Add basic conventions
 
 Status:
@@ -77,8 +84,9 @@ Status:
   - Simplified single-instance interface
   - All PPAPI interfaces are initialized on startup
 
-You can use the NativeBlack lib alone if you want a slightly simplified interface to the NaCl PPAPI where
-most of the boilerplate code is taken care of. You just provide the entry functions.
+You can use the NativeBlack lib alone if you want a slightly simplified interface 
+to the NaCl PPAPI where most of the boilerplate code is taken care of. You just 
+provide the entry functions.
 
 See example: nativecolors/client/src/tests/macton-01-nativeblack-hello/
 
@@ -88,15 +96,17 @@ NATIVEBLUE
 nativecolors/client/src/libraries/sys-headers/
 nativecolors/client/src/libraries/nativeblue/
 
-NativeBlue is where things start to get interesting. This is a support library for client (in-browser)
-applications which builds on top of NativeBlack to provide a more posix-like interface. 
+NativeBlue is where things start to get interesting. This is a support library for 
+client (in-browser) applications which builds on top of NativeBlack to provide a 
+more posix-like interface. 
 
-  - At the basic level, it's equivalent to NativeYellow for the client. It just fills in some of the
-    gaps in libc.
-  - Standard fileio functions are supported (using File System API to write in-client files.)
+  - At the basic level, it's equivalent to NativeYellow for the client. It just 
+    fills in some of the gaps in libc.
+  - Standard fileio functions are supported (using File System API to write 
+    in-client files.)
   - stdin/stderr/stdout TTY is managed and provided in-browser by hterm
-  - PPAPI functions are placed on to a command queue and processed once per frame. The provided functions
-    can be called from any thread at any time.
+  - PPAPI functions are placed on to a command queue and processed once per frame.
+    The provided functions can be called from any thread at any time.
 
 See example: nativecolors/client/src/tests/macton-05-nativeblue-fileio/
 
@@ -125,7 +135,8 @@ Loosely based on fhs http://www.pathname.com/fhs/pub/fhs-2.3.html
 
 /client/src/packages
   - Read-only hosted external source.  
-  - Do not change from original source. Any necessary patches should be applied in /client/src/ports.
+  - Do not change from original source. Any necessary patches should be applied
+    in /client/src/ports.
 
 /client/src/ports
   - Build scripts and patches to build packages. May be libraries or applications.
@@ -140,12 +151,14 @@ Loosely based on fhs http://www.pathname.com/fhs/pub/fhs-2.3.html
   - Test applications to run on client.
 
 /client/srv
-  - Files expected to be served from a server running on the environment hosting these files
+  - Files expected to be served from a server running on the environment hosting 
+    these files
 
 /client/srv/www
-  - Files expected to be served from an http server. This directory is assumed to be the root of that
-    server.
-  - Projects from /client/src/ports and /client/src/projects are installed in this directory.
+  - Files expected to be served from an http server. This directory is assumed to 
+    be the root of that server.
+  - Projects from /client/src/ports and /client/src/projects are installed in this 
+    directory.
 
 /host
   - Files intended for use on the host. But built on the host.
@@ -164,7 +177,8 @@ Loosely based on fhs http://www.pathname.com/fhs/pub/fhs-2.3.html
 
 /host/src/packages
   - Read-only hosted external source.  
-  - Do not change from original source. Any necessary patches should be applied in /host/src/ports.
+  - Do not change from original source. Any necessary patches should be applied 
+    in /host/src/ports.
 
 /host/src/ports
   - Build scripts and patches to build packages. May be libraries or applications.
@@ -182,56 +196,60 @@ Loosely based on fhs http://www.pathname.com/fhs/pub/fhs-2.3.html
 TODO
 ----
 Potential roadmap:
-- userspace kernel (ioctl)
-- loop device driver
-- FUSE driver
-- FUSE file based on AncientFS/UnixFS http://osxbook.com/blog/2008/12/16/more-user-space-file-system-goodies/
-- FUSE ext driver http://alperakcan.org/?open=projects&project=fuse-ext2
-- Socket API + server proxy?
-- BusyBox  http://www.busybox.net/
-- GCC
+  - userspace kernel (ioctl)
+  - loop device driver
+  - FUSE driver
+  - FUSE file based on AncientFS/UnixFS 
+    http://osxbook.com/blog/2008/12/16/more-user-space-file-system-goodies/
+  - FUSE ext driver http://alperakcan.org/?open=projects&project=fuse-ext2
+  - Socket API + server proxy?
+  - BusyBox  http://www.busybox.net/
+  - GCC
 
 Some stuff I want to do in no particular order:
 
-- shell
--- kb support for curses+nativeblue+hterm
--- kb support for curses+nativeyellow
--- Shells: tcsh? sh? bash? ssh? screen?
--- launch process
--- copy environment to sandbox file system
-- gcc.nexe
-- ddlt.nexe
-- Use Tundra build system
-- native-host server to provide file i/o via dropbox API. Use liboauth.
--- Or maybe dropbox API to FileSystem API sync. See: http://www.html5rocks.com/en/tutorials/file/filesystem/
--- I wonder if a FUSE port and then a dropbox FUSE driver would be better?
-- native-host server to provide socket proxy for client builds. Use libwebsockets.
-- Build some stuff from nacl_ports
--- bzip2-1.0.6
--- expat-2.0.1
--- ffmpeg-0.5
--- fftw-3.2.2
--- fontconfig-2.7.3
--- FreeImage-3.14.1
--- freetype-2.1.10
--- ImageMagick-6.5.4-10
--- jpeg-6b
--- jsoncpp-0.5.0
--- libpng-1.2.40
--- libtomcrypt-1.17
--- libtommath-0.41
--- lua-5.1.4
--- openssl-1.0.0e
--- tiff-3.9.1
--- tinyxml
--- x264-snapshot-20091023-2245
-- Separate lib/bin directories per target and configuration type
-- Include necessary native-host stuff from nacl_sdk
-- Note on naming. e.g. see: http://gcc.gnu.org/onlinedocs/gccint/Configure-Terms.html
-- vim.nexe
-- Selectively redirect stdout to another host over socket
--- Select new driver for /dev/stdout?
-- Auto-map function calls from javascript environment to nativeblue
-- POSIX IPC http://docs.oracle.com/cd/E19455-01/806-4750/6jdqdfltf/index.html
-- glut
-- remap gles functions to command queue
+  - shell
+  -- kb support for curses+nativeblue+hterm
+  -- kb support for curses+nativeyellow
+  -- Shells: tcsh? sh? bash? ssh? screen?
+  -- launch process
+  -- copy environment to sandbox file system
+  - gcc.nexe
+  - ddlt.nexe
+  - Use Tundra build system
+  - native-host server to provide file i/o via dropbox API. Use liboauth.
+  -- Or maybe dropbox API to FileSystem API sync. 
+     See: http://www.html5rocks.com/en/tutorials/file/filesystem/
+  -- I wonder if a FUSE port and then a dropbox FUSE driver would be better?
+  - native-host server to provide socket proxy for client builds. Use 
+    libwebsockets.
+  - Build some stuff from nacl_ports
+  -- bzip2-1.0.6
+  -- expat-2.0.1
+  -- ffmpeg-0.5
+  -- fftw-3.2.2
+  -- fontconfig-2.7.3
+  -- FreeImage-3.14.1
+  -- freetype-2.1.10
+  -- ImageMagick-6.5.4-10
+  -- jpeg-6b
+  -- jsoncpp-0.5.0
+  -- libpng-1.2.40
+  -- libtomcrypt-1.17
+  -- libtommath-0.41
+  -- lua-5.1.4
+  -- openssl-1.0.0e
+  -- tiff-3.9.1
+  -- tinyxml
+  -- x264-snapshot-20091023-2245
+  - Separate lib/bin directories per target and configuration type
+  - Include necessary native-host stuff from nacl_sdk
+  - Note on naming. 
+    e.g. see: http://gcc.gnu.org/onlinedocs/gccint/Configure-Terms.html
+  - vim.nexe
+  - Selectively redirect stdout to another host over socket
+  -- Select new driver for /dev/stdout?
+  - Auto-map function calls from javascript environment to nativeblue
+  - POSIX IPC http://docs.oracle.com/cd/E19455-01/806-4750/6jdqdfltf/index.html
+  - glut
+  - remap gles functions to command queue
