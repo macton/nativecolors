@@ -103,11 +103,13 @@ GALFS.prototype.init = function(callback, opt_quota) {
   var onInitFs = function(fs) {
     that.fs = fs;
 
-    // Create a directory for the root of the GAL
-    fs.root.getDirectory(ROOT_DIR, {create: true}, function(dirEntry) {
-      that.root = dirEntry;
-      callback();
-    }, onError);
+    /* -- macton: remove root. #todo specify install root in manifest -- */
+    //  Create a directory for the root of the GAL
+    //  fs.root.getDirectory(ROOT_DIR, {create: true}, function(dirEntry) {
+    //    that.root = dirEntry;
+    //    callback();
+    //  }, onError);
+    that.root = fs.root;
   };
 
   // Callback when the filesystem API has granted quota
