@@ -1,6 +1,0 @@
-{
-  "program": {
-    "x86-32": {"url": "bin/newlib-x86-32/macton-01-nativeblack-hello"},
-    "x86-64": {"url": "bin/newlib-x86-64/macton-01-nativeblack-hello"}
-  }
-}

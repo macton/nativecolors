@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<!-- https://gist.github.com/979770 -->
+<html>
+    <head>
+        <script src="http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js"></script>
+        <meta charset=utf-8 />
+        <title>Chrome File API tester</title>
+
+        <script>
+            window.requestFileSystem  = window.requestFileSystem || window.webkitRequestFileSystem;
+
+            // Handle errors
+            function errorHandler(e) {
+                var msg = '';
+
+                switch (e.code) {
+                    case FileError.QUOTA_EXCEEDED_ERR:
+                        msg = 'QUOTA_EXCEEDED_ERR';
+                        break;
+                    case FileError.NOT_FOUND_ERR:
+                        msg = 'NOT_FOUND_ERR';
+                        break;
+                    case FileError.SECURITY_ERR:
+                        msg = 'SECURITY_ERR';
+                        break;
+                    case FileError.INVALID_MODIFICATION_ERR:
+                        msg = 'INVALID_MODIFICATION_ERR';
+                        break;
+                    case FileError.INVALID_STATE_ERR:
+                        msg = 'INVALID_STATE_ERR';
+                        break;
+                    default:
+                        msg = 'Unknown Error';
+                        break;
+                };
+                console.log('Error: ' + msg);
+            }
+	
+            // Init and write some data to a file
+            function onInitFs(fs) {
+                fs.root.getFile('log-f-api.txt', {create: true}, function(fileEntry) {
+
+                    fileEntry.isFile === true;
+                    fileEntry.name == 'log-f-api.txt';
+                    fileEntry.fullPath == '/log-f-api.txt';
+                    // Create a FileWriter object for our FileEntry (log.txt).
+                    fileEntry.createWriter(function(fileWriter) {
+
+                        fileWriter.onwriteend = function(e) {
+                            console.log('Write completed.');
+                        };
+
+                        fileWriter.onerror = function(e) {
+                            console.log('Write failed: ' + e);
+                        };
+
+                        // Create a new Blob and write it to log.txt.
+                        if (!window.BlobBuilder && window.WebKitBlobBuilder)
+                            window.BlobBuilder = window.WebKitBlobBuilder; // in Chrome 12.
+                        var bb = new BlobBuilder(); 
+                        bb.append("some stuff");
+                        console.log("bb size:"+bb.size);
+                        bb.append('put some nice text in our file....');
+                        var ourData = bb.getBlob('text/plain');
+                        fileWriter.write(ourData); 
+                    }, errorHandler);
+                }, errorHandler);
+            }
+
+            // start the party
+            $(function() {
+                document.getElementById('hello').innerHTML = 'start the tests';
+                window.requestFileSystem(window.PERSISTENT, 5*1024*1024, onInitFs,errorHandler);
+            });
+	
+        </script>
+
+    </head>
+    <body>
+        <p id="hello">Tester FIle API</p>
+
+        <h4>Other links</h4>
+        <ul>
+            <li>http://code.google.com/chrome/extensions/trunk/fileBrowserHandler.html#event-onExecute</li>
+            <li>http://html5rocks.com</li>
+        </ul>
+
+    </body>
+</html>

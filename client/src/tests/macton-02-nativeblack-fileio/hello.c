@@ -94,10 +94,28 @@ void LocalFileSystemOpen( void* user_data, int32_t result )
 
   if ( result == 0 )
   {
-
     g_HelloFileRef = NaBlackFileRefCreate( g_LocalFileSystem, "/hello.txt" );
     g_HelloFileIO  = NaBlackFileIOCreate();
 
+    if (!NaBlackFileRefIsFileRef( g_HelloFileRef ))
+    {
+      NaBlackMessagingPostPrintf( "NaBlackFileRefCreate failed. Not a valid path?\n");
+      return;
+    }
+  
+    if (!NaBlackFileIOIsFileIO( g_HelloFileIO ))
+    {
+      NaBlackMessagingPostPrintf( "NaBlackFileIOCreate failed.\n");
+      NaBlackCoreReleaseResource( g_HelloFileRef );
+      return;
+    }
+
+    PP_Var      root_path_var = NaBlackFileRefGetPath( g_HelloFileRef );
+    uint32_t    root_path_len;
+    const char* root_path     = NaBlackVarVarToUtf8( root_path_var, &root_path_len );
+
+    NaBlackMessagingPostPrintf( "Open Path: %s\n", root_path );
+  
     int32_t               hello_open_flags    = PP_FILEOPENFLAG_CREATE | PP_FILEOPENFLAG_TRUNCATE | PP_FILEOPENFLAG_READ | PP_FILEOPENFLAG_WRITE;
     PP_CompletionCallback hello_open_callback = { .func = HelloFileOpen, .user_data = NULL, .flags = PP_COMPLETIONCALLBACK_FLAG_NONE };
     int32_t               hello_open_status   = NaBlackFileIOOpen( g_HelloFileIO, g_HelloFileRef, hello_open_flags, hello_open_callback );
@@ -114,6 +132,7 @@ PP_Bool NaBlackHandleInputEvent( PP_Resource input_event )
 
 PP_Bool NaBlackInstanceCreate( uint32_t argc, const char* argn[], const char* argv[] )
 {
+  NaBlackMessagingPostPrintf( "BUILT ON %s\n", MAKE_DATE );
   NaBlackMessagingPostPrintf( "Hello, world!" );
 
   g_TempFileSystem  = NaBlackFileSystemCreate( PP_FILESYSTEMTYPE_LOCALTEMPORARY );
