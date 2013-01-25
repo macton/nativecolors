@@ -3,6 +3,9 @@ NATIVECOLORS
 <macton@gmail.com>
 <macton@insomniacgames.com>
 
+UPDATE: Back to the action. Next step: Getting everything to work properly with
+ARM Chromebook as host.
+
 This is an evolving project. It initially started out conceptually as just adding a
 few standard interfaces to make porting some things easier. But quickly, a new 
 end-game has revealed itself.
