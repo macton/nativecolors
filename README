@@ -3,8 +3,13 @@ NATIVECOLORS
 <macton@gmail.com>
 <macton@insomniacgames.com>
 
-UPDATE: Back to the action. Next step: Getting everything to work properly with
-ARM Chromebook as host.
+UPDATE 27 Jan 2013: I think I'm going to drop the host-side nexe support. (1) It's a
+lot of stuff to juggle, (2) I really don't want to track down the issues getting it
+to work on an arm host (not to mention msys on Windows), and (3) this project is
+already *way* big enough. #protip Cut ruthlessly.
+
+UPDATE 25 Jan 2013: Back to the action. Next step: Getting everything to work properly 
+with ARM Chromebook as host.
 
 This is an evolving project. It initially started out conceptually as just adding a
 few standard interfaces to make porting some things easier. But quickly, a new 
