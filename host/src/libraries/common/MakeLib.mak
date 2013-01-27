@@ -58,6 +58,16 @@ CFLAGS   += -m64
 endif
 
 # --------------------------------------------------------------------
+# arm
+# --------------------------------------------------------------------
+
+
+ifeq (arm,$(filter arm,$(MAKECMDGOALS)))
+LIBDIR  := $(LIBDIR)-arm
+OBJEXT   := $(OBJEXT)-arm
+endif
+
+# --------------------------------------------------------------------
 # devel
 # --------------------------------------------------------------------
 
@@ -100,6 +110,14 @@ x86_64:
 	@:
 endif
 
+.PHONY: arm
+ifneq (clean,$(filter clean,$(MAKECMDGOALS)))
+arm: $(LIBDIR)/$(PROJECT).a
+else
+arm:
+	@:
+endif
+
 .PHONY: gcc
 ifneq (clean,$(filter clean,$(MAKECMDGOALS)))
 gcc: $(LIBDIR)/$(PROJECT).a
@@ -135,6 +153,13 @@ TC_PATH :=
 CC      := gcc
 LINK    := ar
 STRIP   := strip
+endif
+
+ifeq (arm,$(filter arm,$(MAKECMDGOALS)))
+TC_PATH  := $(abspath $(NACL_SDK_ROOT)/toolchain/$(OSNAME)_arm_$(LIBCNAME))
+CC       := $(TC_PATH)/bin/arm-nacl-gcc
+LINK     := $(TC_PATH)/bin/arm-nacl-ar
+STRIP    := $(TC_PATH)/bin/arm-nacl-strip
 endif
 
 

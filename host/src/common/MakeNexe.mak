@@ -37,8 +37,8 @@ endif
 
 ifeq (x86_32,$(filter x86_32,$(MAKECMDGOALS)))
 TARGET     := $(TARGET)-x86-32
-OBJEXT      := $(OBJEXT)-x86-32
-CFLAGS      += -m32
+OBJEXT     := $(OBJEXT)-x86-32
+CFLAGS     += -m32
 endif
 
 # --------------------------------------------------------------------
@@ -48,8 +48,18 @@ endif
 
 ifeq (x86_64,$(filter x86_64,$(MAKECMDGOALS)))
 TARGET     := $(TARGET)-x86-64
-OBJEXT      := $(OBJEXT)-x86-64
-CFLAGS      += -m64
+OBJEXT     := $(OBJEXT)-x86-64
+CFLAGS     += -m64
+endif
+
+# --------------------------------------------------------------------
+# arm   
+# --------------------------------------------------------------------
+
+
+ifeq (arm,$(filter arm,$(MAKECMDGOALS)))
+TARGET     := $(TARGET)-arm
+OBJEXT     := $(OBJEXT)-arm
 endif
 
 # --------------------------------------------------------------------
@@ -93,6 +103,14 @@ ifneq (clean,$(filter clean,$(MAKECMDGOALS)))
 x86_64: bin/$(TARGET)/$(PROJECT)
 else
 x86_64:
+	@:
+endif
+
+.PHONY: arm
+ifneq (clean,$(filter clean,$(MAKECMDGOALS)))
+arm: bin/$(TARGET)/$(PROJECT)
+else
+arm:
 	@:
 endif
 
@@ -141,6 +159,14 @@ CC       := $(TC_PATH)/bin/i686-nacl-gcc
 LINK     := $(TC_PATH)/bin/i686-nacl-gcc
 STRIP    := $(TC_PATH)/bin/i686-nacl-strip
 OBJCOPY  := $(TC_PATH)/bin/i686-nacl-objcopy
+
+ifeq (arm,$(filter arm,$(MAKECMDGOALS)))
+TC_PATH  := $(abspath $(NACL_SDK_ROOT)/toolchain/$(OSNAME)_arm_$(LIBCNAME))
+CC       := $(TC_PATH)/bin/arm-nacl-gcc
+LINK     := $(TC_PATH)/bin/arm-nacl-gcc
+STRIP    := $(TC_PATH)/bin/arm-nacl-strip
+OBJCOPY  := $(TC_PATH)/bin/arm-nacl-objcopy
+endif
 
 bin/$(TARGET)/$(PROJECT) : $(OBJS)
 	@mkdir -p bin/$(TARGET)
